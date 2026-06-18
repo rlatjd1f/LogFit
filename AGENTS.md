@@ -1,12 +1,12 @@
 # AGENTS.md
 
-## Project Notes
+## 프로젝트 메모
 
-LogFit is a lightweight static PWA built with HTML, CSS, and vanilla JavaScript.
+LogFit은 HTML, CSS, Vanilla JavaScript로 구성된 초경량 정적 PWA입니다.
 
-## Commit Convention
+## 커밋 컨벤션
 
-Use the following commit prefixes for this project:
+본 프로젝트의 커밋 메시지는 아래 prefix를 사용합니다.
 
 - `feat`: 새로운 기능 추가
 - `fix`: 버그 수정 및 시스템 안정화
@@ -14,4 +14,12 @@ Use the following commit prefixes for this project:
 - `style`: 디자인 및 레이아웃 조정
 - `refactor`: 코드 구조 개선
 
-Keep commit messages concise and scoped to one logical change.
+커밋 내용은 한국어로 작성합니다. prefix는 영어 규칙을 유지하고, prefix 뒤 설명은 간결한 한국어 문장으로 작성합니다.
+
+예시:
+
+- `feat: 루틴 생성 기능 추가`
+- `fix: 휴식 타이머 종료 오류 수정`
+- `docs: README 실행 방법 보강`
+
+하나의 커밋에는 하나의 논리적 변경만 포함합니다.
