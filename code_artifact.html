@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <title>LogFit으로 이동</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <meta http-equiv="refresh" content="0; url=./">
+  <script>
+    const next = new URL("./", location.href);
+    next.search = location.search;
+    next.hash = location.hash;
+    location.replace(next);
+  </script>
+</head>
+<body>
+  <a href="./">LogFit 열기</a>
+</body>
+</html>
