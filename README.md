@@ -1,76 +1,77 @@
 # LogFit
 
-LogFit is a lightweight mobile PWA workout log for rotating split routines. It runs as a static web app, stores data locally in the browser, and works offline after the first load.
+LogFit은 N분할 순환 루틴을 기반으로 운동을 기록하는 초경량 모바일 PWA 운동 일지입니다. 정적 웹 앱으로 동작하며, 모든 데이터는 브라우저 `localStorage`에 저장됩니다. 첫 로드 이후에는 서비스 워커를 통해 오프라인 환경에서도 사용할 수 있습니다.
 
-## Features
+## 주요 기능
 
-- Rotating N-split routine management
-- Built-in exercise master database with 50+ exercises
-- Custom exercise registration
-- Set-by-set workout tracking for weight, reps, and RIR
-- Full-screen rest countdown timer
-- Warning background and Web Audio beep cues near the end of rest
-- Completed workout card state and automatic sorting
-- Progressive overload analytics with Chart.js
-- Volume, estimated 1RM, and average RIR trend chart
-- Light and dark theme toggle
-- JSON backup and restore
-- PWA support with `manifest.json` and service worker caching
+- N분할 순환 루틴 생성 및 관리
+- 50종 이상 내장 운동 마스터 DB 제공
+- 커스텀 운동 직접 등록
+- 세트별 중량, 반복수, RIR 기록
+- 전체 화면 휴식 카운트다운 타이머
+- 휴식 종료 10초 전 경고 배경 및 Web Audio 비프음
+- 완료한 운동 카드 상태 표시 및 자동 정렬
+- Chart.js 기반 점진적 과부하 리포트
+- 총 볼륨, 추정 1RM, 평균 RIR 추이 차트
+- 라이트/다크 테마 전환
+- JSON 데이터 백업 및 복구
+- `manifest.json`과 서비스 워커 기반 PWA 지원
 
-## Project Structure
+## 프로젝트 구조
 
 ```text
 .
-├── code_artifact.html  # Main app UI, styles, and JavaScript
-├── manifest.json       # PWA metadata
-├── sw.js               # Service worker for offline caching
-├── icon.svg            # App icon
+├── code_artifact.html  # 앱 UI, 스타일, JavaScript가 포함된 메인 파일
+├── manifest.json       # PWA 메타데이터
+├── sw.js               # 오프라인 캐싱용 서비스 워커
+├── icon.svg            # 앱 아이콘
+├── AGENTS.md           # 프로젝트 작업 및 커밋 규칙
 ├── .gitignore
 └── README.md
 ```
 
-## Getting Started
+## 실행 방법
 
-Run a local static server from the project root:
+프로젝트 루트에서 정적 서버를 실행합니다.
 
 ```bash
 python3 -m http.server 4173
 ```
 
-Open the app:
+브라우저에서 아래 주소를 엽니다.
 
 ```text
 http://localhost:4173/code_artifact.html
 ```
 
-You can also deploy the project to any static hosting service, such as GitHub Pages, Netlify, Vercel, or Cloudflare Pages.
+GitHub Pages, Netlify, Vercel, Cloudflare Pages 같은 정적 호스팅 서비스에도 배포할 수 있습니다.
 
-## Data Storage
+## 데이터 저장 방식
 
-LogFit uses `localStorage` only. No backend server or account system is required.
+LogFit은 서버나 계정 없이 `localStorage`만 사용합니다.
 
-Stored data includes:
+저장되는 데이터는 다음과 같습니다.
 
-- Theme settings
-- Exercise master data
-- Custom exercises
-- Routine definitions
-- Workout history
+- 테마 설정
+- 운동 마스터 데이터
+- 커스텀 운동
+- 루틴 설정
+- 운동 기록
 
-Use the Backup tab to export or import all app data as JSON.
+앱의 백업 화면에서 전체 데이터를 JSON 파일로 내보내거나 다시 가져올 수 있습니다.
 
-## PWA Notes
+## PWA 안내
 
-The app includes:
+앱에는 다음 PWA 구성 요소가 포함되어 있습니다.
 
 - `manifest.json`
 - `sw.js`
-- SVG app icon
-- Offline app shell caching
+- SVG 앱 아이콘
+- 오프라인 앱 셸 캐싱
 
-For install prompts and service worker behavior, serve the app through `http://localhost`, `https`, or a static hosting provider. Opening the HTML file directly from disk may skip some PWA behavior.
+설치 프롬프트와 서비스 워커 기능은 `http://localhost`, `https`, 또는 정적 호스팅 환경에서 정상 동작합니다. HTML 파일을 디스크에서 직접 열면 일부 PWA 기능이 제한될 수 있습니다.
 
-## Tech Stack
+## 기술 스택
 
 - HTML
 - CSS
@@ -79,6 +80,6 @@ For install prompts and service worker behavior, serve the app through `http://l
 - Web Audio API
 - Service Worker API
 
-## Status
+## 현재 상태
 
-This is an early single-file PWA prototype focused on mobile workout logging and offline-first local data management.
+모바일 운동 기록과 오프라인 우선 로컬 데이터 관리를 목표로 만든 초기 단일 파일 PWA 프로토타입입니다.
