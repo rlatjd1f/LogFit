@@ -291,6 +291,12 @@
             <button class="primary" id="quickStartBtn">시작</button>
           </div>
           <div class="today-routine" id="todayRoutineCard"></div>
+          <div class="section-head">
+            <div>
+              <h2>루틴 목록</h2>
+              <p class="hint">원하는 루틴을 직접 선택하거나 기록을 초기화할 수 있습니다.</p>
+            </div>
+          </div>
           <div class="grid routine-list" id="routineCards"></div>
         </div>
       </section>
@@ -518,7 +524,7 @@
     function renderTodayRoutine() {
       const routine = nextRoutine();
       $("#todayText").textContent = today();
-      $("#quickStartBtn").textContent = routine ? `${routine.name} 시작` : "루틴 추가";
+      $("#quickStartBtn").textContent = routine ? "시작" : "루틴 추가";
       $("#todayRoutineCard").innerHTML = routine ? `
         <div>
           <p class="meta">오늘 시작할 루틴</p>
