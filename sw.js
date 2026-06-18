@@ -1,9 +1,11 @@
-const CACHE_NAME = "logfit-pwa-v2";
+const CACHE_NAME = "logfit-pwa-v3";
 const APP_SHELL = [
   "./",
   "./code_artifact.html",
   "./manifest.json",
-  "./icon.svg"
+  "./icon.svg",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
