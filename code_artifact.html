@@ -1155,8 +1155,12 @@
       deferredInstall = event;
     });
     $("#installBtn").addEventListener("click", async () => {
+      if (matchMedia("(display-mode: standalone)").matches || navigator.standalone) {
+        alert("이미 LogFit 앱으로 실행 중입니다.");
+        return;
+      }
       if (!deferredInstall) {
-        alert("설치 안내\\n\\n모바일 Chrome: 브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.\\niPhone Safari: 공유 버튼을 누르고 '홈 화면에 추가'를 선택하세요.\\nPC Chrome/Edge: 주소창 오른쪽의 설치 아이콘이나 브라우저 메뉴를 확인하세요.");
+        alert("설치 안내\n\n모바일 Chrome: 브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.\n\niPhone Safari: 공유 버튼을 누르고 '홈 화면에 추가'를 선택하세요.\n\nPC Chrome/Edge: 주소창 오른쪽의 설치 아이콘이나 브라우저 메뉴를 확인하세요.\n\n이미 설치했다면 주소창의 '앱에서 열기' 버튼을 사용할 수 있습니다.");
         return;
       }
       deferredInstall.prompt();
