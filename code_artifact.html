@@ -98,6 +98,14 @@
       border-bottom: 1px solid var(--line);
     }
     .brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .brand-mark { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, .16);
+      flex: 0 0 auto;
+    }
     .brand h1 { margin: 0; font-size: 22px; line-height: 1; }
     .brand small { color: var(--muted); font-weight: 750; }
     .toolbar { display: flex; gap: 8px; align-items: center; }
@@ -272,9 +280,12 @@
   <div class="app" id="app">
     <header class="topbar">
       <div class="brand">
-        <div>
-          <h1>LogFit</h1>
-          <small id="subtitle">스마트 로테이션 운동 일지</small>
+        <div class="brand-mark">
+          <img class="brand-icon" src="./icon-192.png" alt="" width="40" height="40">
+          <div>
+            <h1>LogFit</h1>
+            <small id="subtitle">스마트 로테이션 운동 일지</small>
+          </div>
         </div>
         <div class="toolbar">
           <button class="icon-btn ghost" id="themeBtn" title="테마 전환" aria-label="테마 전환"></button>
