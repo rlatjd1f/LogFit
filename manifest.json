@@ -2,7 +2,7 @@
   "name": "LogFit - 스마트 로테이션 운동 일지",
   "short_name": "LogFit",
   "description": "N분할 루틴, 세트 기록, 휴식 타이머, 점진적 과부하 리포트를 제공하는 오프라인 PWA 운동 일지입니다.",
-  "start_url": "./code_artifact.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
