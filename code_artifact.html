@@ -110,6 +110,15 @@
     .brand small { color: var(--muted); font-weight: 750; }
     .toolbar { display: flex; gap: 8px; align-items: center; }
     .icon-btn { width: 42px; min-width: 42px; padding: 0; display: inline-grid; place-items: center; }
+    .install-action {
+      min-width: 66px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .install-action svg { width: 17px; height: 17px; stroke-width: 2.2; }
     .primary { background: var(--primary); color: #fff; }
     .danger { background: color-mix(in srgb, var(--danger) 16%, var(--surface)); color: var(--danger); }
     .ghost { background: transparent; border: 1px solid var(--line); }
@@ -183,13 +192,26 @@
       font-size: 12px;
       font-weight: 800;
     }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .status-badge.idle { background: var(--surface-2); color: var(--muted); }
+    .status-badge.active { background: var(--primary-2); color: var(--primary); }
+    .status-badge.done { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); color: var(--accent); }
     .progress { height: 8px; overflow: hidden; border-radius: 99px; background: var(--surface-2); }
     .bar { height: 100%; width: 0%; border-radius: inherit; background: var(--accent); transition: width .2s ease; }
     .exercise-card.completed { opacity: .72; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
     .exercise-card.completed .title { text-decoration: line-through; text-decoration-thickness: 2px; }
     .set-row {
       display: grid;
-      grid-template-columns: 56px 1fr 1fr 1fr 56px;
+      grid-template-columns: 56px 1fr 1fr 1fr 72px;
       gap: 7px;
       align-items: end;
       padding: 8px;
@@ -210,6 +232,8 @@
     .set-row strong { align-self: center; font-size: 13px; }
     .stepper { display: grid; grid-template-columns: 38px minmax(42px, 1fr) 38px; gap: 5px; align-items: center; }
     .stepper input { text-align: center; padding: 0 4px; }
+    .set-actions { display: grid; gap: 5px; }
+    .set-actions .danger { min-height: 32px; font-size: 12px; }
     .done-btn { background: var(--accent); color: #032016; }
     .done-btn:disabled {
       cursor: default;
@@ -267,6 +291,34 @@
     .timer strong { display: block; font-size: clamp(76px, 24vw, 160px); line-height: .9; }
     .timer p { margin: 10px 0 18px; color: rgba(255,255,255,.76); font-weight: 750; }
     .chart-box { min-height: 280px; }
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 4px;
+      border-radius: var(--radius);
+      background: var(--surface-2);
+    }
+    .segment {
+      min-height: 38px;
+      background: transparent;
+      color: var(--muted);
+    }
+    .segment.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, .08);
+    }
+    .analytics-panel { display: none; }
+    .analytics-panel.active { display: grid; gap: 10px; }
+    .history-item {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
     canvas { max-width: 100%; }
     .empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
     @media (min-width: 680px) {
@@ -289,7 +341,7 @@
         </div>
         <div class="toolbar">
           <button class="icon-btn ghost" id="themeBtn" title="테마 전환" aria-label="테마 전환"></button>
-          <button class="icon-btn primary" id="installBtn" title="설치" aria-label="설치" hidden></button>
+          <button class="install-action primary" id="installBtn" title="앱 설치" aria-label="앱 설치"></button>
         </div>
       </div>
     </header>
@@ -325,7 +377,7 @@
             <select id="workoutRoutine"></select>
           </div>
           <div class="grid" id="workoutList"></div>
-          <button class="primary" id="finishWorkoutBtn">오늘 운동 저장</button>
+          <button class="primary" id="finishWorkoutBtn">메인으로 이동</button>
         </div>
       </section>
 
@@ -346,14 +398,26 @@
         <div class="section">
           <div class="section-head">
             <div>
-              <h2>성장 리포트</h2>
-              <p class="hint">실제 중량과 수정한 반복수 기준입니다.</p>
+              <h2>리포트</h2>
+              <p class="hint">성장 추이와 최근 운동 기록을 확인합니다.</p>
             </div>
-            <select id="chartExercise"></select>
           </div>
-          <div class="panel chart-box">
-            <canvas id="progressChart" height="260"></canvas>
-            <div id="chartFallback" class="empty" hidden>Chart.js를 불러오면 그래프가 표시됩니다.</div>
+          <div class="segmented" role="tablist" aria-label="리포트 보기 선택">
+            <button class="segment active" data-report-tab="progress" type="button">성장 리포트</button>
+            <button class="segment" data-report-tab="history" type="button">최근 기록</button>
+          </div>
+          <div class="analytics-panel active" data-report-panel="progress">
+            <div class="section-head">
+              <p class="hint">실제 중량과 수정한 반복수 기준입니다.</p>
+              <select id="chartExercise"></select>
+            </div>
+            <div class="panel chart-box">
+              <canvas id="progressChart" height="260"></canvas>
+              <div id="chartFallback" class="empty" hidden>Chart.js를 불러오면 그래프가 표시됩니다.</div>
+            </div>
+          </div>
+          <div class="analytics-panel" data-report-panel="history">
+            <div class="grid" id="historyList"></div>
           </div>
         </div>
       </section>
@@ -436,6 +500,7 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
+    const schemaVersion = 1;
     const today = () => new Date().toISOString().slice(0, 10);
     const uid = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
     const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -461,6 +526,7 @@
       ["hip_abduction","힙 어브덕션","하체","머신"],["hack_squat","핵 스쿼트","하체","머신"],["smith_squat","스미스 스쿼트","하체","머신"],["t_bar_row","T바 로우","등","머신"]
     ].map(([id, name, part, type]) => ({ id, name, part, type, category: `${part}/${type}` }));
     const defaultState = () => ({
+      schemaVersion,
       settings: { theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light", nextRoutineIndex: 0 },
       exercisesMaster: masterBase,
       routines: [
@@ -489,6 +555,7 @@
     let editingRoutine = null;
     let editingExercises = [];
     let chart = null;
+    let activeReportTab = "progress";
     let timerInterval = null;
     let timerRemaining = 0;
     let deferredInstall = null;
@@ -497,10 +564,26 @@
       try {
         const saved = JSON.parse(localStorage.getItem(key));
         if (!saved) return defaultState();
-        return { ...defaultState(), ...saved, settings: { ...defaultState().settings, ...saved.settings } };
+        return migrateState(saved);
       } catch {
         return defaultState();
       }
+    }
+    function migrateState(saved) {
+      const base = defaultState();
+      const migrated = {
+        ...base,
+        ...saved,
+        schemaVersion,
+        settings: { ...base.settings, ...saved.settings },
+        exercisesMaster: Array.isArray(saved.exercisesMaster) ? saved.exercisesMaster : base.exercisesMaster,
+        routines: Array.isArray(saved.routines) ? saved.routines : base.routines,
+        history: Array.isArray(saved.history) ? saved.history : base.history
+      };
+      if (saved.schemaVersion !== schemaVersion) {
+        localStorage.setItem(key, JSON.stringify(migrated));
+      }
+      return migrated;
     }
     function saveState() {
       localStorage.setItem(key, JSON.stringify(state));
@@ -520,7 +603,7 @@
       $$(".tab").forEach((el) => el.classList.toggle("active", el.dataset.go === view));
       const titles = { dashboard: "스마트 로테이션 운동 일지", workout: "세트 기록과 휴식 타이머", manage: "루틴 생성 및 편집", analytics: "점진적 과부하 리포트", backup: "오프라인 백업" };
       $("#subtitle").textContent = titles[view];
-      if (view === "analytics") renderChart();
+      if (view === "analytics") renderReport();
     }
     function renderAll() {
       setTheme(state.settings.theme);
@@ -530,6 +613,8 @@
       renderWorkout();
       renderManage();
       renderChartPicker();
+      renderHistory();
+      if (activeView === "analytics") renderReport();
     }
     function nextRoutine() {
       if (!state.routines.length) return null;
@@ -553,6 +638,11 @@
       const done = logs.reduce((sum, log) => sum + log.completedSets.length, 0);
       return { done, total, pct: total ? Math.round(done / total * 100) : 0 };
     }
+    function progressStatus(progress) {
+      if (!progress.done) return { label: "미시작", type: "idle" };
+      if (progress.total && progress.done >= progress.total) return { label: "완료", type: "done" };
+      return { label: "진행 중", type: "active" };
+    }
     function renderRoutineCards() {
       const root = $("#routineCards");
       root.innerHTML = "";
@@ -562,6 +652,7 @@
       }
       state.routines.forEach((routine) => {
         const p = routineProgress(routine);
+        const status = progressStatus(p);
         const card = document.createElement("article");
         card.className = "card routine-card";
         card.innerHTML = `
@@ -570,7 +661,10 @@
               <p class="title">${routine.name}</p>
               <div class="meta">${routine.exercises.length}개 운동 · ${p.done}/${p.total}세트 완료</div>
             </div>
-            <button class="icon-btn ghost" title="수정" aria-label="수정" data-edit="${routine.id}">${icon.settings.split("<span>")[0]}</button>
+            <div class="toolbar">
+              <span class="status-badge ${status.type}">${status.label}</span>
+              <button class="icon-btn ghost" title="수정" aria-label="수정" data-edit="${routine.id}">${icon.settings.split("<span>")[0]}</button>
+            </div>
           </div>
           <div class="chips">${routine.exercises.slice(0, 4).map((ex) => `<span class="chip">${ex.name}</span>`).join("")}</div>
           <div class="progress"><div class="bar" style="width:${p.pct}%"></div></div>
@@ -602,6 +696,15 @@
       if (index >= 0) log.completedSets[index] = value;
       else log.completedSets.push(value);
       log.completedSets.sort((a, b) => a.set - b.set);
+      saveState();
+    }
+    function removeSetLog(routineId, routineExerciseId, setNo) {
+      const log = state.history.find((item) => item.date === today() && item.routineId === routineId && item.routineExerciseId === routineExerciseId);
+      if (!log) return;
+      log.completedSets = log.completedSets.filter((set) => set.set !== setNo);
+      if (!log.completedSets.length) {
+        state.history = state.history.filter((item) => item !== log);
+      }
       saveState();
     }
     function resetExerciseLog(routineId, routineExerciseId) {
@@ -661,7 +764,10 @@
           <label>kg<input type="number" inputmode="decimal" data-field="weight" value="${weight}"></label>
           <label>Reps<div class="stepper"><button type="button" data-step="-1">-</button><input type="number" inputmode="numeric" data-field="reps" value="${reps}"><button type="button" data-step="1">+</button></div></label>
           <label>RIR<input type="number" inputmode="numeric" data-field="rir" value="${rir}"></label>
-          <button type="button" class="done-btn" data-done ${saved ? "disabled" : ""}>${saved ? "완료" : "시작"}</button>
+          <div class="set-actions">
+            <button type="button" class="done-btn" data-done ${saved ? "disabled" : ""}>${saved ? "완료" : "시작"}</button>
+            ${saved ? '<button type="button" class="danger" data-undo-set>취소</button>' : ""}
+          </div>
         </div>`;
     }
     function renderManage() {
@@ -742,6 +848,39 @@
     function renderChartPicker() {
       const exercises = [...new Map(state.history.map((log) => [log.exerciseId, log.exerciseName])).entries()];
       $("#chartExercise").innerHTML = exercises.map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
+    }
+    function renderReport() {
+      $$("[data-report-tab]").forEach((button) => button.classList.toggle("active", button.dataset.reportTab === activeReportTab));
+      $$("[data-report-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.reportPanel === activeReportTab));
+      if (activeReportTab === "progress") renderChart();
+      if (activeReportTab === "history") renderHistory();
+    }
+    function renderHistory() {
+      const root = $("#historyList");
+      if (!root) return;
+      const logs = [...state.history]
+        .filter((log) => log.completedSets?.length)
+        .sort((a, b) => `${b.date}-${b.routineName}`.localeCompare(`${a.date}-${a.routineName}`))
+        .slice(0, 30);
+      if (!logs.length) {
+        root.innerHTML = '<div class="empty">최근 운동 기록이 없습니다.</div>';
+        return;
+      }
+      root.innerHTML = logs.map((log) => {
+        const volume = log.completedSets.reduce((sum, set) => sum + set.weight * set.reps, 0);
+        const setText = log.completedSets.map((set) => `${set.set}Set ${set.weight}kg × ${set.reps}회 · RIR ${set.rir}`).join(" / ");
+        return `
+          <article class="history-item">
+            <div class="status-row">
+              <div>
+                <p class="title">${log.exerciseName}</p>
+                <div class="meta">${log.date} · ${log.routineName || "루틴"} · ${log.completedSets.length}세트</div>
+              </div>
+              <span class="chip">${Math.round(volume)}kg</span>
+            </div>
+            <p class="hint">${setText}</p>
+          </article>`;
+      }).join("");
     }
     function renderChart() {
       const select = $("#chartExercise");
@@ -845,7 +984,7 @@
       try {
         const data = JSON.parse(text);
         if (!data.routines || !data.history || !data.settings) throw new Error("invalid");
-        state = data;
+        state = migrateState(data);
         saveState();
         renderAll();
         alert("복구가 완료되었습니다.");
@@ -888,6 +1027,12 @@
         startTimer(ex.restTime);
         renderAll();
       }
+      const undoSet = event.target.closest("[data-undo-set]");
+      if (undoSet) {
+        const row = undoSet.closest(".set-row");
+        removeSetLog(row.dataset.routine, row.dataset.ex, Number(row.dataset.set));
+        renderAll();
+      }
       const step = event.target.closest("[data-step]");
       if (step) {
         const input = step.parentElement.querySelector("input");
@@ -923,7 +1068,7 @@
       }
     });
     $("#themeBtn").addEventListener("click", () => setTheme(state.settings.theme === "dark" ? "light" : "dark"));
-    $("#installBtn").innerHTML = icon.install;
+    $("#installBtn").innerHTML = `${icon.install}<span>설치</span>`;
     $("#quickStartBtn").addEventListener("click", () => {
       const routine = nextRoutine();
       if (!routine) return go("manage");
@@ -934,10 +1079,8 @@
     });
     $("#workoutRoutine").addEventListener("change", (e) => { activeRoutineId = e.target.value; renderWorkout(); });
     $("#finishWorkoutBtn").addEventListener("click", () => {
-      if (state.routines.length) state.settings.nextRoutineIndex = (state.routines.findIndex((r) => r.id === activeRoutineId) + 1) % state.routines.length;
-      saveState();
       renderAll();
-      alert("저장되었습니다. 다음 추천 루틴이 갱신되었습니다.");
+      go("dashboard");
     });
     $("#newRoutineBtn").addEventListener("click", () => openRoutineDialog());
     $("#closeRoutineDialog").innerHTML = icon.close;
@@ -986,6 +1129,12 @@
       renderAll();
     });
     $("#chartExercise").addEventListener("change", renderChart);
+    $$("[data-report-tab]").forEach((button) => {
+      button.addEventListener("click", () => {
+        activeReportTab = button.dataset.reportTab;
+        renderReport();
+      });
+    });
     $("#exportBtn").addEventListener("click", exportData);
     $("#importBtn").addEventListener("click", () => $("#backupText").value.trim() ? importData($("#backupText").value) : $("#importFile").click());
     $("#importFile").addEventListener("change", async (event) => {
@@ -1004,14 +1153,15 @@
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       deferredInstall = event;
-      $("#installBtn").hidden = false;
     });
     $("#installBtn").addEventListener("click", async () => {
-      if (!deferredInstall) return;
+      if (!deferredInstall) {
+        alert("설치 안내\\n\\n모바일 Chrome: 브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.\\niPhone Safari: 공유 버튼을 누르고 '홈 화면에 추가'를 선택하세요.\\nPC Chrome/Edge: 주소창 오른쪽의 설치 아이콘이나 브라우저 메뉴를 확인하세요.");
+        return;
+      }
       deferredInstall.prompt();
       await deferredInstall.userChoice;
       deferredInstall = null;
-      $("#installBtn").hidden = true;
     });
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
