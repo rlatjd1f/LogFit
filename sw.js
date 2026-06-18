@@ -1,4 +1,4 @@
-const CACHE_NAME = "logfit-pwa-v14";
+const CACHE_NAME = "logfit-pwa-v15";
 const APP_SHELL = [
   "./",
   "./index.html",

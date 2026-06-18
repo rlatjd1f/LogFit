@@ -86,7 +86,7 @@
       width: min(100%, 720px);
       min-height: 100vh;
       margin: 0 auto;
-      padding: env(safe-area-inset-top) 12px calc(84px + env(safe-area-inset-bottom));
+      padding: env(safe-area-inset-top) 12px calc(116px + env(safe-area-inset-bottom));
     }
     .topbar {
       position: sticky;
@@ -332,8 +332,16 @@
       background: var(--surface);
     }
     .version-info {
-      margin-top: 12px;
-      padding: 6px 0 0;
+      position: fixed;
+      left: 50%;
+      bottom: calc(68px + env(safe-area-inset-bottom));
+      z-index: 39;
+      width: min(100%, 720px);
+      transform: translateX(-50%);
+      padding: 5px 12px;
+      border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      backdrop-filter: blur(14px);
       color: var(--muted);
       font-size: 11px;
       font-weight: 750;
@@ -548,7 +556,7 @@
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
     const appVersion = "0.2.0";
-    const cacheVersion = "v14";
+    const cacheVersion = "v15";
     const schemaVersion = 2;
     const today = () => new Date().toISOString().slice(0, 10);
     const uid = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
