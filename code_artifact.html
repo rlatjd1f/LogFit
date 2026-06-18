@@ -147,6 +147,16 @@
     .panel { padding: 12px; display: grid; gap: 12px; }
     .card { padding: 12px; display: grid; gap: 10px; box-shadow: none; }
     .routine-card { min-height: 116px; }
+    .today-routine {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--line));
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--primary) 9%, var(--surface));
+    }
+    .today-routine .title { font-size: 20px; }
     .card-top { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
     .title { margin: 0; font-size: 16px; font-weight: 850; }
     .meta { color: var(--muted); font-size: 12px; font-weight: 700; }
@@ -280,6 +290,7 @@
             </div>
             <button class="primary" id="quickStartBtn">시작</button>
           </div>
+          <div class="today-routine" id="todayRoutineCard"></div>
           <div class="grid routine-list" id="routineCards"></div>
         </div>
       </section>
@@ -493,7 +504,7 @@
     }
     function renderAll() {
       setTheme(state.settings.theme);
-      $("#todayText").textContent = `${today()} · 다음 추천 루틴: ${nextRoutine()?.name || "루틴 없음"}`;
+      renderTodayRoutine();
       renderRoutineCards();
       renderWorkoutSelect();
       renderWorkout();
@@ -503,6 +514,18 @@
     function nextRoutine() {
       if (!state.routines.length) return null;
       return state.routines[state.settings.nextRoutineIndex % state.routines.length];
+    }
+    function renderTodayRoutine() {
+      const routine = nextRoutine();
+      $("#todayText").textContent = today();
+      $("#quickStartBtn").textContent = routine ? `${routine.name} 시작` : "루틴 추가";
+      $("#todayRoutineCard").innerHTML = routine ? `
+        <div>
+          <p class="meta">오늘 시작할 루틴</p>
+          <p class="title">${routine.name}</p>
+        </div>
+        <div class="chips">${routine.exercises.slice(0, 5).map((ex) => `<span class="chip">${ex.name}</span>`).join("")}</div>
+      ` : '<div class="empty">루틴 관리에서 첫 루틴을 만들어보세요.</div>';
     }
     function routineProgress(routine) {
       const logs = state.history.filter((log) => log.date === today() && log.routineId === routine.id);
