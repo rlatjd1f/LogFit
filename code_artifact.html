@@ -164,11 +164,23 @@
     .exercise-card.completed .title { text-decoration: line-through; text-decoration-thickness: 2px; }
     .set-row {
       display: grid;
-      grid-template-columns: 42px 1fr 1fr 1fr 44px;
+      grid-template-columns: 42px 1fr 1fr 1fr 56px;
       gap: 7px;
       align-items: end;
-      padding: 8px 0;
+      padding: 8px;
       border-top: 1px solid var(--line);
+      border-left: 4px solid transparent;
+      border-radius: var(--radius);
+      transition: background .18s ease, border-color .18s ease;
+    }
+    .set-row.completed {
+      background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+      border-left-color: var(--accent);
+    }
+    .set-row.completed strong { color: var(--accent); }
+    .set-row.completed .done-btn {
+      background: color-mix(in srgb, var(--accent) 24%, var(--surface));
+      color: var(--accent);
     }
     .set-row strong { align-self: center; font-size: 13px; }
     .stepper { display: grid; grid-template-columns: 38px minmax(42px, 1fr) 38px; gap: 5px; align-items: center; }
@@ -578,12 +590,12 @@
       const reps = saved?.reps ?? ex.targetReps;
       const rir = saved?.rir ?? 2;
       return `
-        <div class="set-row" data-routine="${routine.id}" data-ex="${ex.id}" data-set="${setNo}">
+        <div class="set-row ${saved ? "completed" : ""}" data-routine="${routine.id}" data-ex="${ex.id}" data-set="${setNo}">
           <strong>${setNo}S</strong>
           <label>kg<input type="number" inputmode="decimal" data-field="weight" value="${weight}"></label>
           <label>Reps<div class="stepper"><button type="button" data-step="-1">-</button><input type="number" inputmode="numeric" data-field="reps" value="${reps}"><button type="button" data-step="1">+</button></div></label>
           <label>RIR<input type="number" inputmode="numeric" data-field="rir" value="${rir}"></label>
-          <button type="button" class="done-btn" data-done>✓</button>
+          <button type="button" class="done-btn" data-done>${saved ? "완료" : "✓"}</button>
         </div>`;
     }
     function renderManage() {
