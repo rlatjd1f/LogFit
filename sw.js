@@ -1,9 +1,12 @@
-const CACHE_NAME = "logfit-pwa-v3";
+const CACHE_NAME = "logfit-pwa-v4";
 const APP_SHELL = [
   "./",
   "./code_artifact.html",
   "./manifest.json",
   "./icon.svg",
+  "./favicon.svg",
+  "./favicon-16.png",
+  "./favicon-32.png",
   "./icon-192.png",
   "./icon-512.png"
 ];
