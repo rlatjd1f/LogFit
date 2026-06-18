@@ -62,6 +62,10 @@
       font-weight: 750;
       cursor: pointer;
     }
+    button:disabled {
+      cursor: default;
+      opacity: .45;
+    }
     button:active { transform: translateY(1px); }
     input, select, textarea {
       width: 100%;
@@ -186,6 +190,11 @@
     .stepper { display: grid; grid-template-columns: 38px minmax(42px, 1fr) 38px; gap: 5px; align-items: center; }
     .stepper input { text-align: center; padding: 0 4px; }
     .done-btn { background: var(--accent); color: #032016; }
+    .done-btn:disabled {
+      cursor: default;
+      opacity: 1;
+      transform: none;
+    }
     .status-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .exercise-pick {
@@ -522,7 +531,10 @@
           </div>
           <div class="chips">${routine.exercises.slice(0, 4).map((ex) => `<span class="chip">${ex.name}</span>`).join("")}</div>
           <div class="progress"><div class="bar" style="width:${p.pct}%"></div></div>
-          <button class="primary" data-start="${routine.id}">운동하기</button>`;
+          <div class="grid two">
+            <button class="primary" data-start="${routine.id}">운동하기</button>
+            <button class="ghost" data-reset-routine="${routine.id}" ${p.done ? "" : "disabled"}>초기화</button>
+          </div>`;
         root.append(card);
       });
     }
@@ -547,6 +559,14 @@
       if (index >= 0) log.completedSets[index] = value;
       else log.completedSets.push(value);
       log.completedSets.sort((a, b) => a.set - b.set);
+      saveState();
+    }
+    function resetExerciseLog(routineId, routineExerciseId) {
+      state.history = state.history.filter((log) => !(log.date === today() && log.routineId === routineId && log.routineExerciseId === routineExerciseId));
+      saveState();
+    }
+    function resetRoutineLog(routineId) {
+      state.history = state.history.filter((log) => !(log.date === today() && log.routineId === routineId));
       saveState();
     }
     function renderWorkout() {
@@ -574,7 +594,10 @@
               <p class="title">${ex.name}</p>
               <div class="meta">${ex.category} · 목표 ${ex.targetSets}세트 × ${ex.targetReps}회 · 휴식 ${ex.restTime}초</div>
             </div>
-            <span class="chip">${doneCount}/${ex.targetSets}</span>
+            <div class="toolbar">
+              <span class="chip">${doneCount}/${ex.targetSets}</span>
+              <button class="ghost" data-reset-ex="${ex.id}" data-routine="${routine.id}" ${doneCount ? "" : "disabled"}>초기화</button>
+            </div>
           </div>
           <div>${Array.from({ length: ex.targetSets }, (_, i) => setRow(routine, ex, i + 1)).join("")}</div>`;
         root.append(card);
@@ -595,7 +618,7 @@
           <label>kg<input type="number" inputmode="decimal" data-field="weight" value="${weight}"></label>
           <label>Reps<div class="stepper"><button type="button" data-step="-1">-</button><input type="number" inputmode="numeric" data-field="reps" value="${reps}"><button type="button" data-step="1">+</button></div></label>
           <label>RIR<input type="number" inputmode="numeric" data-field="rir" value="${rir}"></label>
-          <button type="button" class="done-btn" data-done>${saved ? "완료" : "시작"}</button>
+          <button type="button" class="done-btn" data-done ${saved ? "disabled" : ""}>${saved ? "완료" : "시작"}</button>
         </div>`;
     }
     function renderManage() {
@@ -793,6 +816,16 @@
       if (tab) go(tab.dataset.go);
       const start = event.target.closest("[data-start]");
       if (start) { activeRoutineId = start.dataset.start; renderWorkoutSelect(); renderWorkout(); go("workout"); }
+      const resetRoutine = event.target.closest("[data-reset-routine]");
+      if (resetRoutine) {
+        resetRoutineLog(resetRoutine.dataset.resetRoutine);
+        renderAll();
+      }
+      const resetEx = event.target.closest("[data-reset-ex]");
+      if (resetEx) {
+        resetExerciseLog(resetEx.dataset.routine, resetEx.dataset.resetEx);
+        renderAll();
+      }
       const edit = event.target.closest("[data-edit]");
       if (edit) openRoutineDialog(edit.dataset.edit);
       const add = event.target.closest("[data-add-ex]");
@@ -803,6 +836,7 @@
       }
       const done = event.target.closest("[data-done]");
       if (done) {
+        if (done.disabled) return;
         const row = done.closest(".set-row");
         const routine = state.routines.find((r) => r.id === row.dataset.routine);
         const ex = routine.exercises.find((item) => item.id === row.dataset.ex);
