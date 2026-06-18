@@ -81,7 +81,7 @@
       padding: 0 10px;
     }
     textarea { min-height: 132px; padding: 10px; resize: vertical; }
-    label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
+    label, .field-label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 800; }
     .app {
       width: min(100%, 720px);
       min-height: 100vh;
@@ -167,6 +167,21 @@
     .section-head > div { min-width: 0; }
     .section h2, .panel h2 { margin: 0; font-size: 18px; }
     .hint { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .help-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      border: 0;
+      border-bottom: 1px dotted currentColor;
+      min-height: auto;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--primary);
+      font-size: inherit;
+      font-weight: 850;
+      text-decoration: none;
+    }
     .grid { display: grid; gap: 10px; }
     .two { grid-template-columns: 1fr 1fr; }
     .panel, .card {
@@ -275,6 +290,31 @@
       background: rgba(4, 9, 18, .52);
     }
     .dialog.open { display: flex; }
+    .help-popover {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(76px + env(safe-area-inset-bottom));
+      z-index: 70;
+      display: none;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .help-popover.open { display: grid; gap: 8px; }
+    .help-popover .title { font-size: 15px; }
+    .help-popover ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .help-popover button { justify-self: end; min-height: 34px; padding: 0 10px; }
     .sheet {
       width: min(100%, 720px);
       max-height: 92vh;
@@ -445,7 +485,7 @@
           </div>
           <div class="analytics-panel active" data-report-panel="progress">
             <div class="section-head">
-              <p class="hint">실제 중량과 수정한 반복수 기준입니다.</p>
+              <p class="hint">실제 중량과 수정한 반복수 기준입니다. <button type="button" class="help-link" data-help="rir">RIR</button> 추이도 함께 봅니다.</p>
               <select id="chartExercise"></select>
             </div>
             <div class="panel chart-box">
@@ -475,6 +515,19 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div class="help-popover" id="rirHelp" role="dialog" aria-live="polite" aria-label="RIR 설명">
+    <div class="status-row">
+      <p class="title">RIR이란?</p>
+      <button type="button" class="ghost" data-close-help>닫기</button>
+    </div>
+    <p class="hint">RIR(Reps In Reserve)은 한 세트를 끝냈을 때 더 할 수 있었을 것 같은 반복 횟수입니다.</p>
+    <ul>
+      <li>RIR 2: 2회 정도 더 할 수 있는 여유</li>
+      <li>RIR 0: 더 이상 반복하기 어려운 한계 지점</li>
+      <li>초보자나 부상 방지 목적이라면 보통 RIR 1~3을 권장합니다.</li>
+    </ul>
   </div>
 
   <nav class="tabs" aria-label="하단 내비게이션">
@@ -628,6 +681,12 @@
     function masterById(id) {
       return state.exercisesMaster.find((item) => item.id === id) || masterBase.find((item) => item.id === id);
     }
+    function showRirHelp() {
+      $("#rirHelp").classList.add("open");
+    }
+    function hideRirHelp() {
+      $("#rirHelp").classList.remove("open");
+    }
     function setTheme(theme) {
       state.settings.theme = theme;
       document.documentElement.dataset.theme = theme;
@@ -756,7 +815,7 @@
       const routine = state.routines.find((r) => r.id === activeRoutineId);
       const root = $("#workoutList");
       $("#workoutTitle").textContent = routine?.name || "운동 기록";
-      $("#workoutHint").textContent = "완료한 운동은 아래로 정렬됩니다. 세트 완료 시 휴식 타이머가 시작됩니다.";
+      $("#workoutHint").innerHTML = '완료한 운동은 아래로 정렬됩니다. 세트 완료 시 휴식 타이머가 시작됩니다. <button type="button" class="help-link" data-help="rir">RIR</button>은 여유 반복 수입니다.';
       root.innerHTML = "";
       if (!routine) {
         root.innerHTML = '<div class="empty">기록할 루틴이 없습니다.</div>';
@@ -795,12 +854,13 @@
       const weight = saved?.weight ?? ex.targetWeight;
       const reps = saved?.reps ?? ex.targetReps;
       const rir = saved?.rir ?? 2;
+      const rirHelpButton = '<button type="button" class="help-link" data-help="rir">RIR</button>';
       return `
         <div class="set-row ${saved ? "completed" : ""}" data-routine="${routine.id}" data-ex="${ex.id}" data-set="${setNo}">
           <strong>${setNo} Set</strong>
           <label>kg<input type="number" inputmode="decimal" data-field="weight" value="${weight}"></label>
           <label>Reps<div class="stepper"><button type="button" data-step="-1">-</button><input type="number" inputmode="numeric" data-field="reps" value="${reps}"><button type="button" data-step="1">+</button></div></label>
-          <label>RIR<input type="number" inputmode="numeric" data-field="rir" value="${rir}"></label>
+          <div class="field-label">${rirHelpButton}<input type="number" inputmode="numeric" data-field="rir" value="${rir}"></div>
           <div class="set-actions">
             <button type="button" class="done-btn" data-done ${saved ? "disabled" : ""}>${saved ? "완료" : "시작"}</button>
             ${saved ? '<button type="button" class="danger" data-undo-set>취소</button>' : ""}
@@ -905,7 +965,7 @@
       }
       root.innerHTML = logs.map((log) => {
         const volume = log.completedSets.reduce((sum, set) => sum + set.weight * set.reps, 0);
-        const setText = log.completedSets.map((set) => `${set.set}Set ${set.weight}kg × ${set.reps}회 · RIR ${set.rir}`).join(" / ");
+        const setText = log.completedSets.map((set) => `${set.set}Set ${set.weight}kg × ${set.reps}회 · <button type="button" class="help-link" data-help="rir">RIR</button> ${set.rir}`).join(" / ");
         return `
           <article class="history-item">
             <div class="status-row">
@@ -1031,6 +1091,19 @@
     }
 
     document.addEventListener("click", (event) => {
+      const help = event.target.closest("[data-help='rir']");
+      if (help) {
+        event.preventDefault();
+        event.stopPropagation();
+        showRirHelp();
+        return;
+      }
+      const closeHelp = event.target.closest("[data-close-help]");
+      if (closeHelp) {
+        hideRirHelp();
+        return;
+      }
+      if ($("#rirHelp").classList.contains("open") && !event.target.closest("#rirHelp")) hideRirHelp();
       const tab = event.target.closest(".tab");
       if (tab) go(tab.dataset.go);
       const start = event.target.closest("[data-start]");
