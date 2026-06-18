@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -49,6 +49,7 @@
     * { box-sizing: border-box; }
     body {
       margin: 0;
+      overflow-x: hidden;
       min-height: 100vh;
       background: var(--bg);
       color: var(--text);
@@ -99,6 +100,7 @@
     }
     .brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .brand-mark { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-mark > div { min-width: 0; }
     .brand-icon {
       width: 40px;
       height: 40px;
@@ -107,7 +109,15 @@
       flex: 0 0 auto;
     }
     .brand h1 { margin: 0; font-size: 22px; line-height: 1; }
-    .brand small { color: var(--muted); font-weight: 750; }
+    .brand small {
+      display: block;
+      max-width: 48vw;
+      overflow: hidden;
+      color: var(--muted);
+      font-weight: 750;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .toolbar { display: flex; gap: 8px; align-items: center; }
     .icon-btn { width: 42px; min-width: 42px; padding: 0; display: inline-grid; place-items: center; }
     .install-action {
@@ -154,6 +164,7 @@
     .view.active { display: grid; gap: 12px; }
     .section { display: grid; gap: 10px; }
     .section-head { display: flex; align-items: end; justify-content: space-between; gap: 10px; }
+    .section-head > div { min-width: 0; }
     .section h2, .panel h2 { margin: 0; font-size: 18px; }
     .hint { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
     .grid { display: grid; gap: 10px; }
@@ -230,6 +241,7 @@
       color: var(--accent);
     }
     .set-row strong { align-self: center; font-size: 13px; }
+    .set-row label { min-width: 0; }
     .stepper { display: grid; grid-template-columns: 38px minmax(42px, 1fr) 38px; gap: 5px; align-items: center; }
     .stepper input { text-align: center; padding: 0 4px; }
     .set-actions { display: grid; gap: 5px; }
@@ -321,6 +333,31 @@
     }
     canvas { max-width: 100%; }
     .empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
+    @media (max-width: 430px) {
+      .app { padding-inline: 10px; }
+      .topbar { margin-inline: -10px; padding-inline: 10px; }
+      .brand-icon { width: 36px; height: 36px; border-radius: 9px; }
+      .install-action { min-width: 58px; padding: 0 8px; }
+      .icon-btn { width: 40px; min-width: 40px; }
+      .section-head { align-items: start; }
+      .two, .filters { grid-template-columns: 1fr; }
+      .card-top { align-items: stretch; }
+      .card-top > .toolbar { justify-content: end; }
+      .set-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 8px;
+      }
+      .set-row strong { grid-column: 1; grid-row: 1; }
+      .set-actions {
+        grid-column: 2;
+        grid-row: 1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .set-actions .done-btn:first-child:last-child { grid-column: 1 / -1; }
+      .builder-actions { grid-template-columns: repeat(2, 1fr); }
+      .tabs { gap: 4px; padding-inline: 8px; }
+      .tab { font-size: 10px; }
+    }
     @media (min-width: 680px) {
       .routine-list { grid-template-columns: repeat(2, 1fr); }
       .sheet { border-radius: 14px; margin-bottom: 28px; }
