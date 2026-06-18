@@ -331,6 +331,15 @@
       border-radius: var(--radius);
       background: var(--surface);
     }
+    .version-info {
+      margin-top: 12px;
+      padding: 6px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      text-align: center;
+      opacity: .78;
+    }
     canvas { max-width: 100%; }
     .empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
     @media (max-width: 430px) {
@@ -475,6 +484,7 @@
         </div>
       </section>
     </main>
+    <footer class="version-info" id="versionInfo"></footer>
   </div>
 
   <nav class="tabs" aria-label="하단 내비게이션">
@@ -537,6 +547,8 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
+    const appVersion = "0.2.0";
+    const cacheVersion = "v14";
     const schemaVersion = 2;
     const today = () => new Date().toISOString().slice(0, 10);
     const uid = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -651,6 +663,7 @@
       if (view === "analytics") renderReport();
     }
     function renderAll() {
+      $("#versionInfo").textContent = `LogFit v${appVersion} · SW ${cacheVersion} · Data v${schemaVersion}`;
       setTheme(state.settings.theme);
       renderTodayRoutine();
       renderRoutineCards();
