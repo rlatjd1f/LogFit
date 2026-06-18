@@ -21,7 +21,7 @@ LogFit은 N분할 순환 루틴을 기반으로 운동을 기록하는 초경량
 
 ```text
 .
-├── code_artifact.html  # 앱 UI, 스타일, JavaScript가 포함된 메인 파일
+├── index.html          # 앱 UI, 스타일, JavaScript가 포함된 메인 파일
 ├── manifest.json       # PWA 메타데이터
 ├── sw.js               # 오프라인 캐싱용 서비스 워커
 ├── icon.svg            # 앱 아이콘
@@ -41,7 +41,7 @@ python3 -m http.server 4173
 브라우저에서 아래 주소를 엽니다.
 
 ```text
-http://localhost:4173/code_artifact.html
+http://localhost:4173/
 ```
 
 GitHub Pages, Netlify, Vercel, Cloudflare Pages 같은 정적 호스팅 서비스에도 배포할 수 있습니다.
