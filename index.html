@@ -178,6 +178,11 @@
     .panel { padding: 12px; display: grid; gap: 12px; }
     .card { padding: 12px; display: grid; gap: 10px; box-shadow: none; }
     .routine-card { min-height: 116px; }
+    .routine-card.today-complete {
+      border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+      background: color-mix(in srgb, var(--accent) 11%, var(--surface));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
     .today-routine {
       display: grid;
       gap: 10px;
@@ -188,6 +193,11 @@
       background: color-mix(in srgb, var(--primary) 9%, var(--surface));
     }
     .today-routine .title { font-size: 20px; }
+    .today-routine.empty-today {
+      border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+      border-left-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+    }
     .card-top { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
     .title { margin: 0; font-size: 16px; font-weight: 850; }
     .meta { color: var(--muted); font-size: 12px; font-weight: 700; }
@@ -302,6 +312,27 @@
     .timer.warn { background: #9a3412; }
     .timer strong { display: block; font-size: clamp(76px, 24vw, 160px); line-height: .9; }
     .timer p { margin: 10px 0 18px; color: rgba(255,255,255,.76); font-weight: 750; }
+    .confetti {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .confetti.open { display: block; }
+    .confetti-piece {
+      position: absolute;
+      top: -18px;
+      width: 9px;
+      height: 15px;
+      border-radius: 2px;
+      animation: confetti-fall 980ms ease-out forwards;
+    }
+    @keyframes confetti-fall {
+      0% { transform: translate3d(0, -10px, 0) rotate(0deg); opacity: 1; }
+      100% { transform: translate3d(var(--drift), 105vh, 0) rotate(720deg); opacity: 0; }
+    }
     .chart-box { min-height: 280px; }
     .segmented {
       display: grid;
@@ -431,7 +462,7 @@
             <select id="workoutRoutine"></select>
           </div>
           <div class="grid" id="workoutList"></div>
-          <button class="primary" id="finishWorkoutBtn">메인으로 이동</button>
+          <button class="primary" id="finishWorkoutBtn">운동 완료</button>
         </div>
       </section>
 
@@ -551,14 +582,20 @@
     </div>
   </div>
 
+  <div class="confetti" id="confettiOverlay" aria-hidden="true"></div>
+
   <script>
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.2.0";
-    const cacheVersion = "v15";
-    const schemaVersion = 2;
-    const today = () => new Date().toISOString().slice(0, 10);
+    const appVersion = "0.3.0";
+    const cacheVersion = "v16";
+    const schemaVersion = 3;
+    const today = () => {
+      const now = new Date();
+      const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 10);
+    };
     const uid = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
     const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
     const icon = {
@@ -600,7 +637,8 @@
           makeRoutineExercise("incline_dumbbell_curl", 3, 12, 60, 10)
         ]}
       ],
-      history: []
+      history: [],
+      completedRoutineDays: []
     });
     function makeRoutineExercise(exerciseId, targetSets = 5, targetReps = 10, restTime = 90, targetWeight = 0) {
       const found = masterBase.find((item) => item.id === exerciseId) || masterBase[0];
@@ -635,7 +673,8 @@
         settings: { ...base.settings, ...saved.settings },
         exercisesMaster: Array.isArray(saved.exercisesMaster) ? saved.exercisesMaster : base.exercisesMaster,
         routines: Array.isArray(saved.routines) ? saved.routines : base.routines,
-        history: Array.isArray(saved.history) ? saved.history.map(stripLegacyRir) : base.history
+        history: Array.isArray(saved.history) ? saved.history.map(stripLegacyRir) : base.history,
+        completedRoutineDays: Array.isArray(saved.completedRoutineDays) ? saved.completedRoutineDays : base.completedRoutineDays
       };
       if (saved.schemaVersion !== schemaVersion) {
         localStorage.setItem(key, JSON.stringify(migrated));
@@ -686,11 +725,26 @@
       if (!state.routines.length) return null;
       return state.routines[state.settings.nextRoutineIndex % state.routines.length];
     }
+    function completedRoutineToday() {
+      return state.completedRoutineDays.find((item) => item.date === today()) || null;
+    }
+    function isRoutineCompletedToday(routineId) {
+      return state.completedRoutineDays.some((item) => item.date === today() && item.routineId === routineId);
+    }
     function renderTodayRoutine() {
+      const completed = completedRoutineToday();
       const routine = nextRoutine();
       $("#todayText").textContent = today();
-      $("#quickStartBtn").textContent = routine ? "시작" : "루틴 추가";
-      $("#todayRoutineCard").innerHTML = routine ? `
+      $("#quickStartBtn").textContent = completed ? "완료됨" : routine ? "시작" : "루틴 추가";
+      $("#quickStartBtn").disabled = Boolean(completed);
+      $("#todayRoutineCard").classList.toggle("empty-today", Boolean(completed));
+      $("#todayRoutineCard").innerHTML = completed ? `
+        <div>
+          <p class="meta">오늘 운동 완료</p>
+          <p class="title">${completed.routineName || "루틴"} 완료됨</p>
+        </div>
+        <p class="hint">자정이 지나면 다음 로테이션이 표시됩니다.</p>
+      ` : routine ? `
         <div>
           <p class="meta">오늘 시작할 루틴</p>
           <p class="title">${routine.name}</p>
@@ -719,16 +773,17 @@
       state.routines.forEach((routine) => {
         const p = routineProgress(routine);
         const status = progressStatus(p);
+        const completedToday = isRoutineCompletedToday(routine.id);
         const card = document.createElement("article");
-        card.className = "card routine-card";
+        card.className = `card routine-card ${completedToday ? "today-complete" : ""}`;
         card.innerHTML = `
           <div class="card-top">
             <div>
               <p class="title">${routine.name}</p>
-              <div class="meta">${routine.exercises.length}개 운동 · ${p.done}/${p.total}세트 완료</div>
+              <div class="meta">${routine.exercises.length}개 운동 · ${p.done}/${p.total}세트 완료${completedToday ? " · 오늘 운동 완료" : ""}</div>
             </div>
             <div class="toolbar">
-              <span class="status-badge ${status.type}">${status.label}</span>
+              <span class="status-badge ${completedToday ? "done" : status.type}">${completedToday ? "오늘 완료" : status.label}</span>
               <button class="icon-btn ghost" title="수정" aria-label="수정" data-edit="${routine.id}">${icon.settings.split("<span>")[0]}</button>
             </div>
           </div>
@@ -775,10 +830,29 @@
     }
     function resetExerciseLog(routineId, routineExerciseId) {
       state.history = state.history.filter((log) => !(log.date === today() && log.routineId === routineId && log.routineExerciseId === routineExerciseId));
+      state.completedRoutineDays = state.completedRoutineDays.filter((item) => !(item.date === today() && item.routineId === routineId));
       saveState();
     }
     function resetRoutineLog(routineId) {
       state.history = state.history.filter((log) => !(log.date === today() && log.routineId === routineId));
+      state.completedRoutineDays = state.completedRoutineDays.filter((item) => !(item.date === today() && item.routineId === routineId));
+      saveState();
+    }
+    function completeRoutine(routine) {
+      if (!routine) return;
+      routine.exercises.forEach((ex) => {
+        for (let setNo = 1; setNo <= Number(ex.targetSets || 0); setNo += 1) {
+          if (!getSetLog(routine.id, ex.id, setNo)) {
+            upsertSet(routine, ex, setNo, { weight: ex.targetWeight, reps: ex.targetReps });
+          }
+        }
+      });
+      const existing = state.completedRoutineDays.find((item) => item.date === today() && item.routineId === routine.id);
+      if (!existing) {
+        state.completedRoutineDays.push({ date: today(), routineId: routine.id, routineName: routine.name, completedAt: new Date().toISOString() });
+      }
+      const routineIndex = state.routines.findIndex((item) => item.id === routine.id);
+      if (routineIndex >= 0) state.settings.nextRoutineIndex = (routineIndex + 1) % state.routines.length;
       saveState();
     }
     function renderWorkout() {
@@ -1053,6 +1127,25 @@
         alert("JSON 형식이 올바르지 않습니다.");
       }
     }
+    function launchConfetti() {
+      const overlay = $("#confettiOverlay");
+      const colors = ["#1769e0", "#0f9f6e", "#f97316", "#e5484d", "#facc15", "#7c3aed"];
+      overlay.innerHTML = "";
+      overlay.classList.add("open");
+      for (let i = 0; i < 72; i += 1) {
+        const piece = document.createElement("span");
+        piece.className = "confetti-piece";
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = `${Math.random() * 180}ms`;
+        piece.style.setProperty("--drift", `${Math.random() * 180 - 90}px`);
+        overlay.append(piece);
+      }
+      setTimeout(() => {
+        overlay.classList.remove("open");
+        overlay.innerHTML = "";
+      }, 1300);
+    }
 
     document.addEventListener("click", (event) => {
       const tab = event.target.closest(".tab");
@@ -1131,6 +1224,7 @@
     $("#themeBtn").addEventListener("click", () => setTheme(state.settings.theme === "dark" ? "light" : "dark"));
     $("#installBtn").innerHTML = `${icon.install}<span>설치</span>`;
     $("#quickStartBtn").addEventListener("click", () => {
+      if (completedRoutineToday()) return;
       const routine = nextRoutine();
       if (!routine) return go("manage");
       activeRoutineId = routine.id;
@@ -1140,8 +1234,12 @@
     });
     $("#workoutRoutine").addEventListener("change", (e) => { activeRoutineId = e.target.value; renderWorkout(); });
     $("#finishWorkoutBtn").addEventListener("click", () => {
+      const routine = state.routines.find((r) => r.id === activeRoutineId);
+      if (!routine) return go("manage");
+      completeRoutine(routine);
       renderAll();
-      go("dashboard");
+      launchConfetti();
+      setTimeout(() => go("dashboard"), 650);
     });
     $("#newRoutineBtn").addEventListener("click", () => openRoutineDialog());
     $("#closeRoutineDialog").innerHTML = icon.close;
@@ -1231,6 +1329,13 @@
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
     }
+    let renderedDate = today();
+    setInterval(() => {
+      if (renderedDate !== today()) {
+        renderedDate = today();
+        renderAll();
+      }
+    }, 60000);
     $$(".tab")[0].innerHTML = icon.home;
     $$(".tab")[1].innerHTML = icon.dumbbell;
     $$(".tab")[2].innerHTML = icon.settings;
