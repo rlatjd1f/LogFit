@@ -402,6 +402,17 @@
       text-align: center;
       opacity: .78;
     }
+    .update-panel {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .update-panel button {
+      width: 100%;
+    }
     canvas { max-width: 100%; }
     .empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
     @media (max-width: 430px) {
@@ -472,6 +483,10 @@
             </div>
           </div>
           <div class="grid routine-list" id="routineCards"></div>
+          <div class="update-panel">
+            <p class="hint">설치한 앱에 최신 변경이 보이지 않으면 다시 불러오세요.</p>
+            <button class="ghost" id="updateAppBtn">업데이트</button>
+          </div>
         </div>
       </section>
 
@@ -611,8 +626,8 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.3.3";
-    const cacheVersion = "v19";
+    const appVersion = "0.3.4";
+    const cacheVersion = "v20";
     const schemaVersion = 3;
     const today = () => {
       const now = new Date();
@@ -1152,6 +1167,28 @@
         alert("JSON 형식이 올바르지 않습니다.");
       }
     }
+    async function refreshAppShell() {
+      const button = $("#updateAppBtn");
+      button.disabled = true;
+      button.textContent = "업데이트 중";
+      try {
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.update().catch(() => null)));
+        }
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.filter((name) => name.startsWith("logfit-")).map((name) => caches.delete(name)));
+        }
+        const url = new URL(location.href);
+        url.searchParams.set("refresh", Date.now());
+        location.replace(url.toString());
+      } catch {
+        button.disabled = false;
+        button.textContent = "업데이트";
+        alert("업데이트를 다시 시도해 주세요.");
+      }
+    }
     function launchConfetti() {
       const overlay = $("#confettiOverlay");
       const colors = ["#1769e0", "#0f9f6e", "#f97316", "#e5484d", "#facc15", "#7c3aed"];
@@ -1248,6 +1285,7 @@
     });
     $("#themeBtn").addEventListener("click", () => setTheme(state.settings.theme === "dark" ? "light" : "dark"));
     $("#installBtn").innerHTML = `${icon.install}<span>설치</span>`;
+    $("#updateAppBtn").addEventListener("click", refreshAppShell);
     $("#quickStartBtn").addEventListener("click", () => {
       if (completedRoutineToday()) return;
       const routine = nextRoutine();
