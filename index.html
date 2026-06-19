@@ -132,6 +132,16 @@
     .primary { background: var(--primary); color: #fff; }
     .danger { background: color-mix(in srgb, var(--danger) 16%, var(--surface)); color: var(--danger); }
     .ghost { background: transparent; border: 1px solid var(--line); }
+    .reset-action {
+      background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+      border: 1px solid color-mix(in srgb, var(--danger) 42%, var(--line));
+      color: var(--danger);
+    }
+    .reset-action:disabled {
+      background: var(--surface-2);
+      border-color: var(--line);
+      color: var(--muted);
+    }
     .tabs {
       position: fixed;
       left: 50%;
@@ -588,8 +598,8 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.3.0";
-    const cacheVersion = "v16";
+    const appVersion = "0.3.1";
+    const cacheVersion = "v17";
     const schemaVersion = 3;
     const today = () => {
       const now = new Date();
@@ -791,7 +801,7 @@
           <div class="progress"><div class="bar" style="width:${p.pct}%"></div></div>
           <div class="grid two">
             <button class="primary" data-start="${routine.id}">운동하기</button>
-            <button class="ghost" data-reset-routine="${routine.id}" ${p.done ? "" : "disabled"}>초기화</button>
+            <button class="reset-action" data-reset-routine="${routine.id}" ${p.done ? "" : "disabled"}>초기화</button>
           </div>`;
         root.append(card);
       });
