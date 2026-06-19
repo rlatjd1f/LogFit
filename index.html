@@ -611,8 +611,8 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.3.2";
-    const cacheVersion = "v18";
+    const appVersion = "0.3.3";
+    const cacheVersion = "v19";
     const schemaVersion = 3;
     const today = () => {
       const now = new Date();
@@ -724,13 +724,15 @@
       $("#themeBtn").innerHTML = theme === "dark" ? icon.sun : icon.moon;
       saveState();
     }
-    function go(view) {
+    function go(view, options = {}) {
+      const shouldPushHistory = options.history !== false && view !== activeView && window.history?.pushState;
       activeView = view;
       $$(".view").forEach((el) => el.classList.toggle("active", el.dataset.view === view));
       $$(".tab").forEach((el) => el.classList.toggle("active", el.dataset.go === view));
       const titles = { dashboard: "스마트 로테이션 운동 일지", workout: "세트 기록과 휴식 타이머", manage: "루틴 생성 및 편집", analytics: "점진적 과부하 리포트", backup: "오프라인 백업" };
       $("#subtitle").textContent = titles[view];
       if (view === "analytics") renderReport();
+      if (shouldPushHistory) history.pushState({ view }, "", location.href);
     }
     function renderAll() {
       $("#versionInfo").textContent = `LogFit v${appVersion} · SW ${cacheVersion} · Data v${schemaVersion}`;
@@ -1349,6 +1351,14 @@
       await deferredInstall.userChoice;
       deferredInstall = null;
     });
+    window.addEventListener("popstate", () => {
+      if (activeView !== "dashboard") {
+        $("#routineDialog").classList.remove("open");
+        stopTimer();
+        go("dashboard", { history: false });
+        history.replaceState({ view: "dashboard" }, "", location.href);
+      }
+    });
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
     }
@@ -1364,6 +1374,7 @@
     $$(".tab")[2].innerHTML = icon.settings;
     $$(".tab")[3].innerHTML = icon.chart;
     $$(".tab")[4].innerHTML = icon.backup;
+    history.replaceState({ view: "dashboard" }, "", location.href);
     renderAll();
   </script>
 </body>
