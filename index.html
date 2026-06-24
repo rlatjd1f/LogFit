@@ -272,6 +272,15 @@
       opacity: 1;
       transform: none;
     }
+    .set-count-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .set-count-actions button {
+      min-height: 34px;
+      font-size: 12px;
+    }
     .status-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .filter-field {
@@ -626,9 +635,9 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.3.4";
-    const cacheVersion = "v20";
-    const schemaVersion = 3;
+    const appVersion = "0.4.0";
+    const cacheVersion = "v21";
+    const schemaVersion = 4;
     const today = () => {
       const now = new Date();
       const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
@@ -680,7 +689,8 @@
     });
     function makeRoutineExercise(exerciseId, targetSets = 5, targetReps = 10, restTime = 90, targetWeight = 0) {
       const found = masterBase.find((item) => item.id === exerciseId) || masterBase[0];
-      return { id: uid("rx"), exerciseId: found.id, name: found.name, category: found.category, targetSets, targetReps, restTime, targetWeight };
+      const setTargets = Array.from({ length: targetSets }, (_, index) => ({ set: index + 1, weight: targetWeight, reps: targetReps }));
+      return { id: uid("rx"), exerciseId: found.id, name: found.name, category: found.category, targetSets, targetReps, restTime, targetWeight, setTargets };
     }
     let state = loadState();
     let activeView = "dashboard";
@@ -692,6 +702,7 @@
     let timerInterval = null;
     let timerRemaining = 0;
     let deferredInstall = null;
+    const workoutDrafts = new Map();
 
     function loadState() {
       try {
@@ -710,7 +721,9 @@
         schemaVersion,
         settings: { ...base.settings, ...saved.settings },
         exercisesMaster: Array.isArray(saved.exercisesMaster) ? saved.exercisesMaster : base.exercisesMaster,
-        routines: Array.isArray(saved.routines) ? saved.routines : base.routines,
+        routines: Array.isArray(saved.routines)
+          ? saved.routines.map((routine) => ({ ...routine, exercises: Array.isArray(routine.exercises) ? routine.exercises.map(normalizeExercise) : [] }))
+          : base.routines,
         history: Array.isArray(saved.history) ? saved.history.map(stripLegacyRir) : base.history,
         completedRoutineDays: Array.isArray(saved.completedRoutineDays) ? saved.completedRoutineDays : base.completedRoutineDays
       };
@@ -726,6 +739,20 @@
           ? log.completedSets.map((set) => ({ set: set.set, weight: Number(set.weight) || 0, reps: Number(set.reps) || 0 }))
           : []
       };
+    }
+    function normalizeExercise(ex) {
+      const targetSets = Math.max(1, Number(ex.targetSets) || 1);
+      const targetWeight = Number(ex.targetWeight) || 0;
+      const targetReps = Number(ex.targetReps) || 0;
+      const setTargets = Array.from({ length: targetSets }, (_, index) => {
+        const saved = Array.isArray(ex.setTargets) ? ex.setTargets[index] : null;
+        return {
+          set: index + 1,
+          weight: Number(saved?.weight ?? targetWeight) || 0,
+          reps: Number(saved?.reps ?? targetReps) || 0
+        };
+      });
+      return { ...ex, targetSets, targetWeight, targetReps, setTargets };
     }
     function saveState() {
       localStorage.setItem(key, JSON.stringify(state));
@@ -871,20 +898,91 @@
     function resetExerciseLog(routineId, routineExerciseId) {
       state.history = state.history.filter((log) => !(log.date === today() && log.routineId === routineId && log.routineExerciseId === routineExerciseId));
       state.completedRoutineDays = state.completedRoutineDays.filter((item) => !(item.date === today() && item.routineId === routineId));
+      workoutDrafts.delete(draftKey(routineId, routineExerciseId));
       saveState();
     }
     function resetRoutineLog(routineId) {
       state.history = state.history.filter((log) => !(log.date === today() && log.routineId === routineId));
       state.completedRoutineDays = state.completedRoutineDays.filter((item) => !(item.date === today() && item.routineId === routineId));
+      [...workoutDrafts.keys()].filter((key) => key.startsWith(`${routineId}:`)).forEach((key) => workoutDrafts.delete(key));
+      saveState();
+    }
+    function draftKey(routineId, routineExerciseId) {
+      return `${routineId}:${routineExerciseId}`;
+    }
+    function getRoutineSetTarget(ex, setNo) {
+      const setTarget = Array.isArray(ex.setTargets) ? ex.setTargets[setNo - 1] : null;
+      return {
+        weight: Number(setTarget?.weight ?? ex.targetWeight) || 0,
+        reps: Number(setTarget?.reps ?? ex.targetReps) || 0
+      };
+    }
+    function getWorkoutDraft(routineId, ex) {
+      const key = draftKey(routineId, ex.id);
+      if (!workoutDrafts.has(key)) {
+        const targetSets = Math.max(1, Number(ex.targetSets) || 1);
+        workoutDrafts.set(key, {
+          targetSets,
+          setTargets: Array.from({ length: targetSets }, (_, index) => ({ set: index + 1, ...getRoutineSetTarget(ex, index + 1) }))
+        });
+      }
+      return workoutDrafts.get(key);
+    }
+    function getWorkoutSetCount(routineId, ex) {
+      return getWorkoutDraft(routineId, ex).targetSets;
+    }
+    function setWorkoutSetCount(routineId, ex, nextCount) {
+      const draft = getWorkoutDraft(routineId, ex);
+      const count = clamp(nextCount, 1, 12);
+      while (draft.setTargets.length < count) {
+        const previous = draft.setTargets[draft.setTargets.length - 1] || getRoutineSetTarget(ex, draft.setTargets.length + 1);
+        draft.setTargets.push({ set: draft.setTargets.length + 1, weight: Number(previous.weight) || 0, reps: Number(previous.reps) || 0 });
+      }
+      draft.setTargets = draft.setTargets.slice(0, count).map((target, index) => ({ ...target, set: index + 1 }));
+      draft.targetSets = count;
+    }
+    function syncDraftRow(row) {
+      const routine = state.routines.find((item) => item.id === row.dataset.routine);
+      const ex = routine?.exercises.find((item) => item.id === row.dataset.ex);
+      if (!routine || !ex) return;
+      const draft = getWorkoutDraft(routine.id, ex);
+      const setNo = Number(row.dataset.set);
+      while (draft.setTargets.length < setNo) {
+        setWorkoutSetCount(routine.id, ex, setNo);
+      }
+      const values = Object.fromEntries($$("[data-field]", row).map((input) => [input.dataset.field, input.value]));
+      draft.setTargets[setNo - 1] = { set: setNo, weight: Number(values.weight) || 0, reps: Number(values.reps) || 0 };
+    }
+    function removeLogsAfterSet(routineId, routineExerciseId, maxSet) {
+      const log = state.history.find((item) => item.date === today() && item.routineId === routineId && item.routineExerciseId === routineExerciseId);
+      if (!log) return;
+      log.completedSets = log.completedSets.filter((set) => set.set <= maxSet);
+      if (!log.completedSets.length) {
+        state.history = state.history.filter((item) => item !== log);
+      }
+      saveState();
+    }
+    function applyWorkoutDraftToRoutine(routine) {
+      routine.exercises.forEach((ex) => {
+        $$(`.set-row[data-routine="${routine.id}"][data-ex="${ex.id}"]`).forEach(syncDraftRow);
+        const draft = getWorkoutDraft(routine.id, ex);
+        ex.targetSets = draft.targetSets;
+        ex.setTargets = draft.setTargets.map((target, index) => ({
+          set: index + 1,
+          weight: Number(target.weight) || 0,
+          reps: Number(target.reps) || 0
+        }));
+        const first = ex.setTargets[0] || { weight: ex.targetWeight, reps: ex.targetReps };
+        ex.targetWeight = Number(first.weight) || 0;
+        ex.targetReps = Number(first.reps) || 0;
+      });
       saveState();
     }
     function completeRoutine(routine) {
       if (!routine) return;
       routine.exercises.forEach((ex) => {
         for (let setNo = 1; setNo <= Number(ex.targetSets || 0); setNo += 1) {
-          if (!getSetLog(routine.id, ex.id, setNo)) {
-            upsertSet(routine, ex, setNo, { weight: ex.targetWeight, reps: ex.targetReps });
-          }
+          upsertSet(routine, ex, setNo, getRoutineSetTarget(ex, setNo));
         }
       });
       const existing = state.completedRoutineDays.find((item) => item.date === today() && item.routineId === routine.id);
@@ -906,26 +1004,31 @@
         return;
       }
       const sorted = [...routine.exercises].sort((a, b) => {
-        const ad = countDone(routine.id, a.id) >= a.targetSets;
-        const bd = countDone(routine.id, b.id) >= b.targetSets;
+        const ad = countDone(routine.id, a.id) >= getWorkoutSetCount(routine.id, a);
+        const bd = countDone(routine.id, b.id) >= getWorkoutSetCount(routine.id, b);
         return Number(ad) - Number(bd);
       });
       sorted.forEach((ex) => {
         const doneCount = countDone(routine.id, ex.id);
+        const setCount = getWorkoutSetCount(routine.id, ex);
         const card = document.createElement("article");
-        card.className = `card exercise-card ${doneCount >= ex.targetSets ? "completed" : ""}`;
+        card.className = `card exercise-card ${doneCount >= setCount ? "completed" : ""}`;
         card.innerHTML = `
           <div class="card-top">
             <div>
               <p class="title">${ex.name}</p>
-              <div class="meta">${ex.category} · 목표 ${ex.targetSets}세트 × ${ex.targetReps}회 · 휴식 ${ex.restTime}초</div>
+              <div class="meta">${ex.category} · 목표 ${setCount}세트 · 휴식 ${ex.restTime}초</div>
             </div>
             <div class="toolbar">
-              <span class="chip">${doneCount}/${ex.targetSets}</span>
+              <span class="chip">${doneCount}/${setCount}</span>
               <button class="ghost" data-reset-ex="${ex.id}" data-routine="${routine.id}" ${doneCount ? "" : "disabled"}>초기화</button>
             </div>
           </div>
-          <div>${Array.from({ length: ex.targetSets }, (_, i) => setRow(routine, ex, i + 1)).join("")}</div>`;
+          <div class="set-count-actions">
+            <button type="button" data-adjust-workout-sets="${ex.id}" data-routine="${routine.id}" data-dir="-1" ${setCount <= 1 ? "disabled" : ""}>- 세트</button>
+            <button type="button" data-adjust-workout-sets="${ex.id}" data-routine="${routine.id}" data-dir="1" ${setCount >= 12 ? "disabled" : ""}>+ 세트</button>
+          </div>
+          <div>${Array.from({ length: setCount }, (_, i) => setRow(routine, ex, i + 1)).join("")}</div>`;
         root.append(card);
       });
     }
@@ -935,8 +1038,10 @@
     }
     function setRow(routine, ex, setNo) {
       const saved = getSetLog(routine.id, ex.id, setNo);
-      const weight = saved?.weight ?? ex.targetWeight;
-      const reps = saved?.reps ?? ex.targetReps;
+      const draft = getWorkoutDraft(routine.id, ex);
+      const target = draft.setTargets[setNo - 1] || getRoutineSetTarget(ex, setNo);
+      const weight = saved?.weight ?? target.weight;
+      const reps = saved?.reps ?? target.reps;
       return `
         <div class="set-row ${saved ? "completed" : ""}" data-routine="${routine.id}" data-ex="${ex.id}" data-set="${setNo}">
           <strong>${setNo} Set</strong>
@@ -1229,13 +1334,14 @@
       const add = event.target.closest("[data-add-ex]");
       if (add) {
         const found = masterById(add.dataset.addEx);
-        editingExercises.push({ id: uid("rx"), exerciseId: found.id, name: found.name, category: found.category, targetSets: 5, targetReps: 10, restTime: 90, targetWeight: 0 });
+        editingExercises.push(normalizeExercise({ id: uid("rx"), exerciseId: found.id, name: found.name, category: found.category, targetSets: 5, targetReps: 10, restTime: 90, targetWeight: 0 }));
         renderBuilder();
       }
       const done = event.target.closest("[data-done]");
       if (done) {
         if (done.disabled) return;
         const row = done.closest(".set-row");
+        syncDraftRow(row);
         const routine = state.routines.find((r) => r.id === row.dataset.routine);
         const ex = routine.exercises.find((item) => item.id === row.dataset.ex);
         const payload = Object.fromEntries($$("[data-field]", row).map((input) => [input.dataset.field, input.value]));
@@ -1253,6 +1359,18 @@
       if (step) {
         const input = step.parentElement.querySelector("input");
         input.value = Math.max(0, Number(input.value || 0) + Number(step.dataset.step));
+        syncDraftRow(step.closest(".set-row"));
+      }
+      const adjustWorkoutSets = event.target.closest("[data-adjust-workout-sets]");
+      if (adjustWorkoutSets) {
+        const routine = state.routines.find((item) => item.id === adjustWorkoutSets.dataset.routine);
+        const ex = routine?.exercises.find((item) => item.id === adjustWorkoutSets.dataset.adjustWorkoutSets);
+        if (!routine || !ex) return;
+        $$(`.set-row[data-routine="${routine.id}"][data-ex="${ex.id}"]`).forEach(syncDraftRow);
+        const nextCount = getWorkoutSetCount(routine.id, ex) + Number(adjustWorkoutSets.dataset.dir);
+        setWorkoutSetCount(routine.id, ex, nextCount);
+        removeLogsAfterSet(routine.id, ex.id, getWorkoutSetCount(routine.id, ex));
+        renderAll();
       }
       const move = event.target.closest("[data-move]");
       if (move) {
@@ -1275,13 +1393,23 @@
       const remove = event.target.closest("[data-remove-builder]");
       if (remove) { editingExercises = editingExercises.filter((ex) => ex.id !== remove.dataset.removeBuilder); renderBuilder(); }
       const plus = event.target.closest("[data-plus-set]");
-      if (plus) { editingExercises.find((ex) => ex.id === plus.dataset.plusSet).targetSets += 1; renderBuilder(); }
+      if (plus) {
+        const ex = editingExercises.find((item) => item.id === plus.dataset.plusSet);
+        ex.targetSets += 1;
+        ex.setTargets = Array.from({ length: ex.targetSets }, (_, index) => ex.setTargets?.[index] || { set: index + 1, weight: Number(ex.targetWeight) || 0, reps: Number(ex.targetReps) || 0 });
+        renderBuilder();
+      }
       const minus = event.target.closest("[data-minus-set]");
       if (minus) {
         const ex = editingExercises.find((item) => item.id === minus.dataset.minusSet);
         ex.targetSets = Math.max(1, ex.targetSets - 1);
+        ex.setTargets = (ex.setTargets || []).slice(0, ex.targetSets).map((target, index) => ({ ...target, set: index + 1 }));
         renderBuilder();
       }
+    });
+    document.addEventListener("input", (event) => {
+      const field = event.target.closest(".set-row [data-field]");
+      if (field) syncDraftRow(field.closest(".set-row"));
     });
     $("#themeBtn").addEventListener("click", () => setTheme(state.settings.theme === "dark" ? "light" : "dark"));
     $("#installBtn").innerHTML = `${icon.install}<span>설치</span>`;
@@ -1299,6 +1427,7 @@
     $("#finishWorkoutBtn").addEventListener("click", () => {
       const routine = state.routines.find((r) => r.id === activeRoutineId);
       if (!routine) return go("manage");
+      applyWorkoutDraftToRoutine(routine);
       completeRoutine(routine);
       renderAll();
       launchConfetti();
@@ -1324,6 +1453,9 @@
       const item = event.target.closest("[data-builder]");
       const ex = editingExercises.find((row) => row.id === item.dataset.builder);
       ex[input.dataset.editField] = Number(input.value);
+      if (["targetSets", "targetReps", "targetWeight"].includes(input.dataset.editField)) {
+        ex.setTargets = Array.from({ length: Math.max(1, Number(ex.targetSets) || 1) }, (_, index) => ({ set: index + 1, weight: Number(ex.targetWeight) || 0, reps: Number(ex.targetReps) || 0 }));
+      }
     });
     $("#routineForm").addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1331,9 +1463,9 @@
       if (!name || !editingExercises.length) return alert("루틴 이름과 운동을 추가하세요.");
       if (editingRoutine) {
         editingRoutine.name = name;
-        editingRoutine.exercises = editingExercises;
+        editingRoutine.exercises = editingExercises.map(normalizeExercise);
       } else {
-        const routine = { id: uid("routine"), name, exercises: editingExercises };
+        const routine = { id: uid("routine"), name, exercises: editingExercises.map(normalizeExercise) };
         state.routines.push(routine);
         activeRoutineId = routine.id;
       }
