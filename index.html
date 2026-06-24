@@ -635,8 +635,8 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.4.0";
-    const cacheVersion = "v21";
+    const appVersion = "0.4.1";
+    const cacheVersion = "v22";
     const schemaVersion = 4;
     const today = () => {
       const now = new Date();
@@ -1048,8 +1048,7 @@
           <label>kg<input type="number" inputmode="decimal" data-field="weight" value="${weight}"></label>
           <label>Reps<div class="stepper"><button type="button" data-step="-1">-</button><input type="number" inputmode="numeric" data-field="reps" value="${reps}"><button type="button" data-step="1">+</button></div></label>
           <div class="set-actions">
-            <button type="button" class="done-btn" data-done ${saved ? "disabled" : ""}>${saved ? "완료" : "시작"}</button>
-            ${saved ? '<button type="button" class="danger" data-undo-set>취소</button>' : ""}
+            ${saved ? '<button type="button" class="danger" data-undo-set>취소</button>' : '<button type="button" class="done-btn" data-done>완료</button>'}
           </div>
         </div>`;
     }
