@@ -660,8 +660,9 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.4.3";
-    const cacheVersion = "v24";
+    const timerKey = "logfit.timer.v1";
+    const appVersion = "0.4.4";
+    const cacheVersion = "v25";
     const schemaVersion = 4;
     const today = () => {
       const now = new Date();
@@ -726,6 +727,7 @@
     let activeReportTab = "progress";
     let timerInterval = null;
     let timerRemaining = 0;
+    let timerEndAt = 0;
     let timerContext = { exerciseName: "", setNo: 0 };
     let deferredInstall = null;
     const workoutDrafts = new Map();
@@ -1239,14 +1241,16 @@
     function startTimer(seconds, context = {}) {
       clearInterval(timerInterval);
       timerRemaining = Number(seconds) || 60;
+      timerEndAt = Date.now() + timerRemaining * 1000;
       timerContext = { exerciseName: context.exerciseName || "", setNo: Number(context.setNo) || 0 };
       $("#timerOverlay").classList.add("open");
+      saveTimerState();
       tickTimer();
       tone(620, .08);
       timerInterval = setInterval(() => {
-        timerRemaining -= 1;
+        const previous = timerRemaining;
         tickTimer();
-        if (timerRemaining === 10) tone(900, .11);
+        if (previous > 10 && timerRemaining <= 10 && timerRemaining > 0) tone(900, .11);
         if (timerRemaining <= 0) {
           tone(520, .08);
           setTimeout(() => tone(760, .12), 130);
@@ -1255,6 +1259,7 @@
       }, 1000);
     }
     function tickTimer() {
+      if (timerEndAt) timerRemaining = Math.max(0, Math.ceil((timerEndAt - Date.now()) / 1000));
       $("#timerNumber").textContent = String(Math.max(0, timerRemaining)).padStart(2, "0");
       $("#timerContext").textContent = timerContext.exerciseName ? `${timerContext.exerciseName} · ${timerContext.setNo} Set 후 휴식` : "운동 휴식";
       $("#timerLabel").textContent = timerRemaining <= 10 ? "다음 세트 준비" : `${timerContext.setNo || ""} Set 휴식 중`.trim();
@@ -1276,8 +1281,32 @@
     function stopTimer() {
       clearInterval(timerInterval);
       timerRemaining = 0;
+      timerEndAt = 0;
       timerContext = { exerciseName: "", setNo: 0 };
+      localStorage.removeItem(timerKey);
       $("#timerOverlay").classList.remove("open", "warn", "compact");
+    }
+    function saveTimerState() {
+      localStorage.setItem(timerKey, JSON.stringify({ endAt: timerEndAt, context: timerContext }));
+    }
+    function restoreTimerState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(timerKey));
+        if (!saved?.endAt || saved.endAt <= Date.now()) {
+          localStorage.removeItem(timerKey);
+          return;
+        }
+        timerEndAt = Number(saved.endAt);
+        timerContext = saved.context || { exerciseName: "", setNo: 0 };
+        tickTimer();
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          tickTimer();
+          if (timerRemaining <= 0) stopTimer();
+        }, 1000);
+      } catch {
+        localStorage.removeItem(timerKey);
+      }
     }
     function tone(freq, duration) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1550,7 +1579,11 @@
       }
     });
     $("#skipTimerBtn").addEventListener("click", stopTimer);
-    $("#addTimerBtn").addEventListener("click", () => { timerRemaining += 10; tickTimer(); });
+    $("#addTimerBtn").addEventListener("click", () => {
+      timerEndAt = Math.max(timerEndAt, Date.now()) + 10000;
+      saveTimerState();
+      tickTimer();
+    });
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       deferredInstall = event;
@@ -1573,6 +1606,12 @@
         returnHomeKeepingTimer();
       }
     });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && timerEndAt) tickTimer();
+    });
+    window.addEventListener("focus", () => {
+      if (timerEndAt) tickTimer();
+    });
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
     }
@@ -1590,6 +1629,7 @@
     $$(".tab")[4].innerHTML = icon.backup;
     history.replaceState({ view: "dashboard" }, "", location.href);
     renderAll();
+    restoreTimerState();
   </script>
 </body>
 </html>
