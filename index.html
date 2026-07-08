@@ -660,8 +660,8 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.4.2";
-    const cacheVersion = "v23";
+    const appVersion = "0.4.3";
+    const cacheVersion = "v24";
     const schemaVersion = 4;
     const today = () => {
       const now = new Date();
@@ -814,6 +814,7 @@
       renderChartPicker();
       renderHistory();
       if (activeView === "analytics") renderReport();
+      updateTimerDisplayMode();
     }
     function nextRoutine() {
       if (!state.routines.length) return null;
@@ -1261,8 +1262,16 @@
       updateTimerDisplayMode();
     }
     function updateTimerDisplayMode() {
+      const overlay = $("#timerOverlay");
+      overlay.classList.toggle("open", timerRemaining > 0);
       const compact = timerRemaining > 0 && activeView !== "workout";
-      $("#timerOverlay").classList.toggle("compact", compact);
+      overlay.classList.toggle("compact", compact);
+    }
+    function returnHomeKeepingTimer() {
+      $("#routineDialog").classList.remove("open");
+      go("dashboard", { history: false });
+      updateTimerDisplayMode();
+      history.replaceState({ view: "dashboard" }, "", location.href);
     }
     function stopTimer() {
       clearInterval(timerInterval);
@@ -1351,7 +1360,10 @@
 
     document.addEventListener("click", (event) => {
       const tab = event.target.closest(".tab");
-      if (tab) go(tab.dataset.go);
+      if (tab) {
+        if (tab.dataset.go === "dashboard") returnHomeKeepingTimer();
+        else go(tab.dataset.go);
+      }
       const start = event.target.closest("[data-start]");
       if (start) { activeRoutineId = start.dataset.start; renderWorkoutSelect(); renderWorkout(); go("workout"); }
       const resetRoutine = event.target.closest("[data-reset-routine]");
@@ -1558,9 +1570,7 @@
     });
     window.addEventListener("popstate", () => {
       if (activeView !== "dashboard") {
-        $("#routineDialog").classList.remove("open");
-        go("dashboard", { history: false });
-        history.replaceState({ view: "dashboard" }, "", location.href);
+        returnHomeKeepingTimer();
       }
     });
     if ("serviceWorker" in navigator) {
