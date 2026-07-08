@@ -331,7 +331,7 @@
     .timer {
       position: fixed;
       inset: 0;
-      z-index: 80;
+      z-index: 35;
       display: none;
       place-items: center;
       padding: 20px;
@@ -341,9 +341,33 @@
       transition: background .45s ease;
     }
     .timer.open { display: grid; }
+    .timer.compact {
+      inset: auto 12px calc(82px + env(safe-area-inset-bottom)) auto;
+      z-index: 50;
+      width: min(280px, calc(100% - 24px));
+      display: none;
+      place-items: stretch;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: var(--radius);
+      background: #0f172a;
+      box-shadow: 0 18px 34px rgba(0,0,0,.28);
+      text-align: left;
+    }
+    .timer.open.compact { display: grid; }
+    .timer.compact strong { font-size: 34px; line-height: 1; }
+    .timer.compact p { margin: 3px 0 8px; font-size: 12px; }
+    .timer.compact .grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .timer.compact button { min-height: 34px; }
     .timer.warn { background: #9a3412; }
     .timer strong { display: block; font-size: clamp(76px, 24vw, 160px); line-height: .9; }
     .timer p { margin: 10px 0 18px; color: rgba(255,255,255,.76); font-weight: 750; }
+    .timer-context {
+      margin-bottom: 8px;
+      color: rgba(255,255,255,.84);
+      font-size: 14px;
+      font-weight: 850;
+    }
     .confetti {
       position: fixed;
       inset: 0;
@@ -620,6 +644,7 @@
 
   <div class="timer" id="timerOverlay">
     <div>
+      <div class="timer-context" id="timerContext">운동 휴식</div>
       <strong id="timerNumber">00</strong>
       <p id="timerLabel">휴식 중</p>
       <div class="grid two">
@@ -635,8 +660,8 @@
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
-    const appVersion = "0.4.1";
-    const cacheVersion = "v22";
+    const appVersion = "0.4.2";
+    const cacheVersion = "v23";
     const schemaVersion = 4;
     const today = () => {
       const now = new Date();
@@ -701,6 +726,7 @@
     let activeReportTab = "progress";
     let timerInterval = null;
     let timerRemaining = 0;
+    let timerContext = { exerciseName: "", setNo: 0 };
     let deferredInstall = null;
     const workoutDrafts = new Map();
 
@@ -774,6 +800,7 @@
       const titles = { dashboard: "스마트 로테이션 운동 일지", workout: "세트 기록과 휴식 타이머", manage: "루틴 생성 및 편집", analytics: "점진적 과부하 리포트", backup: "오프라인 백업" };
       $("#subtitle").textContent = titles[view];
       if (view === "analytics") renderReport();
+      updateTimerDisplayMode();
       if (shouldPushHistory) history.pushState({ view }, "", location.href);
     }
     function renderAll() {
@@ -1208,9 +1235,10 @@
         }
       });
     }
-    function startTimer(seconds) {
+    function startTimer(seconds, context = {}) {
       clearInterval(timerInterval);
       timerRemaining = Number(seconds) || 60;
+      timerContext = { exerciseName: context.exerciseName || "", setNo: Number(context.setNo) || 0 };
       $("#timerOverlay").classList.add("open");
       tickTimer();
       tone(620, .08);
@@ -1227,12 +1255,20 @@
     }
     function tickTimer() {
       $("#timerNumber").textContent = String(Math.max(0, timerRemaining)).padStart(2, "0");
-      $("#timerLabel").textContent = timerRemaining <= 10 ? "다음 세트 준비" : "휴식 중";
+      $("#timerContext").textContent = timerContext.exerciseName ? `${timerContext.exerciseName} · ${timerContext.setNo} Set 후 휴식` : "운동 휴식";
+      $("#timerLabel").textContent = timerRemaining <= 10 ? "다음 세트 준비" : `${timerContext.setNo || ""} Set 휴식 중`.trim();
       $("#timerOverlay").classList.toggle("warn", timerRemaining <= 10);
+      updateTimerDisplayMode();
+    }
+    function updateTimerDisplayMode() {
+      const compact = timerRemaining > 0 && activeView !== "workout";
+      $("#timerOverlay").classList.toggle("compact", compact);
     }
     function stopTimer() {
       clearInterval(timerInterval);
-      $("#timerOverlay").classList.remove("open", "warn");
+      timerRemaining = 0;
+      timerContext = { exerciseName: "", setNo: 0 };
+      $("#timerOverlay").classList.remove("open", "warn", "compact");
     }
     function tone(freq, duration) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1345,7 +1381,7 @@
         const ex = routine.exercises.find((item) => item.id === row.dataset.ex);
         const payload = Object.fromEntries($$("[data-field]", row).map((input) => [input.dataset.field, input.value]));
         upsertSet(routine, ex, Number(row.dataset.set), payload);
-        startTimer(ex.restTime);
+        startTimer(ex.restTime, { exerciseName: ex.name, setNo: Number(row.dataset.set) });
         renderAll();
       }
       const undoSet = event.target.closest("[data-undo-set]");
@@ -1523,7 +1559,6 @@
     window.addEventListener("popstate", () => {
       if (activeView !== "dashboard") {
         $("#routineDialog").classList.remove("open");
-        stopTimer();
         go("dashboard", { history: false });
         history.replaceState({ view: "dashboard" }, "", location.href);
       }
