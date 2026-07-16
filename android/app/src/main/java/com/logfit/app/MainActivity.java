@@ -48,19 +48,24 @@ public class MainActivity extends BridgeActivity {
     }
 
     // Android 12+ 자동 PIP 상태 업데이트
-    public void updatePipParams(boolean enable) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-                builder.setAspectRatio(new Rational(1, 1));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    builder.setAutoEnterEnabled(enable);
+    public void updatePipParams(final boolean enable) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    try {
+                        PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+                        builder.setAspectRatio(new Rational(1, 1));
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            builder.setAutoEnterEnabled(enable);
+                        }
+                        setPictureInPictureParams(builder.build());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-                setPictureInPictureParams(builder.build());
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        }
+        });
     }
 
     @Override

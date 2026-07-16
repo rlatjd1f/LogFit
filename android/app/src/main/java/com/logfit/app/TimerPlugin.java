@@ -37,9 +37,14 @@ public class TimerPlugin extends Plugin {
             }
             
             MainActivity.isTimerRunning = true;
-            MainActivity activity = (MainActivity) getActivity();
+            final MainActivity activity = (MainActivity) getActivity();
             if (activity != null) {
-                activity.updatePipParams(true);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        activity.updatePipParams(true);
+                    }
+                });
             }
             call.resolve();
         } catch (Exception e) {
@@ -55,9 +60,14 @@ public class TimerPlugin extends Plugin {
             getContext().stopService(intent);
             
             MainActivity.isTimerRunning = false;
-            MainActivity activity = (MainActivity) getActivity();
+            final MainActivity activity = (MainActivity) getActivity();
             if (activity != null) {
-                activity.updatePipParams(false);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        activity.updatePipParams(false);
+                    }
+                });
             }
             call.resolve();
         } catch (Exception e) {
@@ -69,9 +79,14 @@ public class TimerPlugin extends Plugin {
     public void setTimerRunningFlag(PluginCall call) {
         boolean isRunning = call.getBoolean("isRunning", false);
         MainActivity.isTimerRunning = isRunning;
-        MainActivity activity = (MainActivity) getActivity();
+        final MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
-            activity.updatePipParams(isRunning);
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    activity.updatePipParams(isRunning);
+                }
+            });
         }
         call.resolve();
     }
