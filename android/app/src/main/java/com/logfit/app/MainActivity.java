@@ -47,6 +47,22 @@ public class MainActivity extends BridgeActivity {
         return false;
     }
 
+    // Android 12+ 자동 PIP 상태 업데이트
+    public void updatePipParams(boolean enable) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+                builder.setAspectRatio(new Rational(1, 1));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    builder.setAutoEnterEnabled(enable);
+                }
+                setPictureInPictureParams(builder.build());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();

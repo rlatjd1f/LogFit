@@ -37,6 +37,10 @@ public class TimerPlugin extends Plugin {
             }
             
             MainActivity.isTimerRunning = true;
+            MainActivity activity = (MainActivity) getActivity();
+            if (activity != null) {
+                activity.updatePipParams(true);
+            }
             call.resolve();
         } catch (Exception e) {
             call.reject("Failed to start timer service: " + e.getMessage());
@@ -51,6 +55,10 @@ public class TimerPlugin extends Plugin {
             getContext().stopService(intent);
             
             MainActivity.isTimerRunning = false;
+            MainActivity activity = (MainActivity) getActivity();
+            if (activity != null) {
+                activity.updatePipParams(false);
+            }
             call.resolve();
         } catch (Exception e) {
             call.reject("Failed to stop timer service: " + e.getMessage());
@@ -61,6 +69,10 @@ public class TimerPlugin extends Plugin {
     public void setTimerRunningFlag(PluginCall call) {
         boolean isRunning = call.getBoolean("isRunning", false);
         MainActivity.isTimerRunning = isRunning;
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            activity.updatePipParams(isRunning);
+        }
         call.resolve();
     }
 
