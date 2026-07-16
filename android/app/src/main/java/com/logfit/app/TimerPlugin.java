@@ -1,6 +1,7 @@
 package com.logfit.app;
 
 import android.content.Intent;
+import android.util.Log;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -16,12 +17,14 @@ public class TimerPlugin extends Plugin {
     public void load() {
         super.load();
         instance = this;
+        Log.d("LogFitTimerPlugin", "load: TimerPlugin loaded into memory");
     }
 
     @PluginMethod
     public void startTimer(PluginCall call) {
         int seconds = call.getInt("seconds", 90);
         String label = call.getString("label", "운동 휴식");
+        Log.d("LogFitTimerPlugin", "startTimer API called: seconds=" + seconds + ", label=" + label);
 
         try {
             Intent intent = new Intent(getContext(), TimerService.class);
@@ -48,12 +51,14 @@ public class TimerPlugin extends Plugin {
             }
             call.resolve();
         } catch (Exception e) {
+            Log.e("LogFitTimerPlugin", "startTimer error: ", e);
             call.reject("Failed to start timer service: " + e.getMessage());
         }
     }
 
     @PluginMethod
     public void stopTimer(PluginCall call) {
+        Log.d("LogFitTimerPlugin", "stopTimer API called");
         try {
             Intent intent = new Intent(getContext(), TimerService.class);
             intent.setAction("STOP");
@@ -71,13 +76,15 @@ public class TimerPlugin extends Plugin {
             }
             call.resolve();
         } catch (Exception e) {
+            Log.e("LogFitTimerPlugin", "stopTimer error: ", e);
             call.reject("Failed to stop timer service: " + e.getMessage());
         }
     }
 
     @PluginMethod
     public void setTimerRunningFlag(PluginCall call) {
-        boolean isRunning = call.getBoolean("isRunning", false);
+        final boolean isRunning = call.getBoolean("isRunning", false);
+        Log.d("LogFitTimerPlugin", "setTimerRunningFlag: isRunning=" + isRunning);
         MainActivity.isTimerRunning = isRunning;
         final MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
@@ -110,6 +117,7 @@ public class TimerPlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         instance = null;
+        Log.d("LogFitTimerPlugin", "handleOnDestroy: TimerPlugin instance cleared");
         super.handleOnDestroy();
     }
 }

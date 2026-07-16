@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -25,12 +26,14 @@ public class TimerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d("LogFitTimerService", "onCreate: TimerService initialized");
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannel();
     }
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("LogFitTimerService", "onStartCommand called: intent=" + (intent != null ? intent.getAction() : "null"));
         if (intent != null) {
             String action = intent.getAction();
             if ("START".equals(action)) {
@@ -39,11 +42,13 @@ public class TimerService extends Service {
                 if (exerciseLabel == null || exerciseLabel.isEmpty()) {
                     exerciseLabel = "운동 휴식";
                 }
+                Log.d("LogFitTimerService", "onStartCommand START: seconds=" + remainingSeconds + ", label=" + exerciseLabel);
                 
                 MainActivity.isTimerRunning = true;
                 startForegroundServiceWithNotification();
                 startCountdownTimer();
             } else if ("STOP".equals(action)) {
+                Log.d("LogFitTimerService", "onStartCommand STOP received");
                 stopSelf();
             }
         }
@@ -51,6 +56,7 @@ public class TimerService extends Service {
     }
     
     private void startForegroundServiceWithNotification() {
+        Log.d("LogFitTimerService", "startForegroundServiceWithNotification: starting foreground");
         Notification notification = buildNotification(remainingSeconds);
         startForeground(NOTIFICATION_ID, notification);
     }
@@ -70,6 +76,7 @@ public class TimerService extends Service {
                     // Capacitor 플러그인을 통해 웹뷰로 실시간 남은 초 전송
                     TimerPlugin.sendTimerTickEvent(remainingSeconds);
                 } else {
+                    Log.d("LogFitTimerService", "Timer finished. Stopping service.");
                     TimerPlugin.sendTimerFinishedEvent();
                     stopSelf();
                 }
@@ -124,6 +131,7 @@ public class TimerService extends Service {
     
     @Override
     public void onDestroy() {
+        Log.d("LogFitTimerService", "onDestroy: TimerService stopping");
         if (timer != null) {
             timer.cancel();
             timer = null;
