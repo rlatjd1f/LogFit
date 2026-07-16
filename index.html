@@ -478,6 +478,28 @@
       .sheet { border-radius: 14px; margin-bottom: 28px; }
       .dialog { align-items: center; padding: 18px; }
     }
+    #toast {
+      position: fixed;
+      bottom: calc(86px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 10px 20px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -661,8 +683,8 @@
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const key = "logfit.v1";
     const timerKey = "logfit.timer.v1";
-    const appVersion = "0.4.4";
-    const cacheVersion = "v25";
+    const appVersion = "0.4.5";
+    const cacheVersion = "v26";
     const schemaVersion = 4;
     const today = () => {
       const now = new Date();
@@ -795,7 +817,6 @@
       saveState();
     }
     function go(view, options = {}) {
-      const shouldPushHistory = options.history !== false && view !== activeView && window.history?.pushState;
       activeView = view;
       $$(".view").forEach((el) => el.classList.toggle("active", el.dataset.view === view));
       $$(".tab").forEach((el) => el.classList.toggle("active", el.dataset.go === view));
@@ -803,7 +824,9 @@
       $("#subtitle").textContent = titles[view];
       if (view === "analytics") renderReport();
       updateTimerDisplayMode();
-      if (shouldPushHistory) history.pushState({ view }, "", location.href);
+      if (options.history !== false && window.history?.replaceState) {
+        history.replaceState({ view }, "", location.href);
+      }
     }
     function renderAll() {
       $("#versionInfo").textContent = `LogFit v${appVersion} · SW ${cacheVersion} · Data v${schemaVersion}`;
@@ -1601,9 +1624,47 @@
       await deferredInstall.userChoice;
       deferredInstall = null;
     });
-    window.addEventListener("popstate", () => {
+    let exitReady = false;
+    let exitTimeout = null;
+    function showToast(message) {
+      let toast = $("#toast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "toast";
+        document.body.appendChild(toast);
+      }
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toast.timeout);
+      toast.timeout = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2000);
+    }
+    window.addEventListener("popstate", (event) => {
+      const stateVal = event.state;
       if (activeView !== "dashboard") {
-        returnHomeKeepingTimer();
+        $("#routineDialog").classList.remove("open");
+        go("dashboard", { history: false });
+        updateTimerDisplayMode();
+        history.pushState({ view: "dashboard" }, "", location.href);
+      } else {
+        if (stateVal && stateVal.root) {
+          if (exitReady) {
+            window.close();
+            history.go(-2);
+          } else {
+            exitReady = true;
+            showToast("한 번 더 누르면 종료됩니다.");
+            clearTimeout(exitTimeout);
+            exitTimeout = setTimeout(() => {
+              exitReady = false;
+            }, 2000);
+            history.pushState({ view: "dashboard" }, "", location.href);
+          }
+        } else {
+          const targetView = stateVal?.view || "dashboard";
+          go(targetView, { history: false });
+        }
       }
     });
     document.addEventListener("visibilitychange", () => {
@@ -1627,7 +1688,8 @@
     $$(".tab")[2].innerHTML = icon.settings;
     $$(".tab")[3].innerHTML = icon.chart;
     $$(".tab")[4].innerHTML = icon.backup;
-    history.replaceState({ view: "dashboard" }, "", location.href);
+    history.replaceState({ view: "dashboard", root: true }, "", location.href);
+    history.pushState({ view: "dashboard" }, "", location.href);
     renderAll();
     restoreTimerState();
   </script>
