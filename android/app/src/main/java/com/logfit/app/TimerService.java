@@ -103,7 +103,7 @@ public class TimerService extends Service {
         return new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
-            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .setOnlyAlertOnce(true)
             .setOngoing(true)

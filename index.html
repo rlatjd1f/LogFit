@@ -625,9 +625,10 @@
           <h2>음향 설정</h2>
           <div class="panel">
             <p class="hint">알림 및 타이머 완료 비프음의 볼륨을 조절합니다.</p>
-            <label>알림 볼륨 (<span id="volumeValue">100</span>%)
-              <input type="range" id="volumeSlider" min="0" max="100" value="100" style="margin-top: 5px; height: 38px; cursor: pointer;">
-            </label>
+            <div style="display: grid; gap: 6px;">
+              <span style="color: var(--muted); font-size: 12px; font-weight: 800;">알림 볼륨 (<span id="volumeValue">100</span>%)</span>
+              <input type="range" id="volumeSlider" min="0" max="100" value="100" style="margin-top: 5px; height: 38px; cursor: pointer; width: 100%;">
+            </div>
           </div>
           <h2>백업 및 복구</h2>
           <div class="panel">
@@ -710,6 +711,7 @@
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const hasCapacitor = typeof window !== "undefined" && window.Capacitor && window.Capacitor.Plugins;
     const TimerPlugin = hasCapacitor ? window.Capacitor.Plugins.TimerPlugin : null;
+    const AppPlugin = hasCapacitor ? window.Capacitor.Plugins.App : null;
     const key = "logfit.v1";
     const timerKey = "logfit.timer.v1";
     const appVersion = "0.4.5";
@@ -1764,6 +1766,26 @@
         }
       }
     });
+    if (AppPlugin) {
+      AppPlugin.addListener('backButton', () => {
+        if (activeView !== "dashboard") {
+          $("#routineDialog").classList.remove("open");
+          go("dashboard", { history: false });
+          updateTimerDisplayMode();
+        } else {
+          if (exitReady) {
+            AppPlugin.exitApp();
+          } else {
+            exitReady = true;
+            showToast("한 번 더 누르면 종료됩니다.");
+            clearTimeout(exitTimeout);
+            exitTimeout = setTimeout(() => {
+              exitReady = false;
+            }, 2000);
+          }
+        }
+      });
+    }
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden && timerEndAt) tickTimer();
     });
