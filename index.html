@@ -500,6 +500,26 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+    body.pip-mode .app,
+    body.pip-mode .tabs,
+    body.pip-mode .timer-context,
+    body.pip-mode .timer p,
+    body.pip-mode .timer .grid {
+      display: none !important;
+    }
+    body.pip-mode .timer {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: grid !important;
+      place-items: center;
+      background: #0f172a;
+      padding: 0;
+    }
+    body.pip-mode .timer strong {
+      font-size: clamp(48px, 45vw, 140px);
+      line-height: 1;
+    }
   </style>
 </head>
 <body>
@@ -602,6 +622,13 @@
 
       <section class="view" data-view="backup">
         <div class="section">
+          <h2>음향 설정</h2>
+          <div class="panel">
+            <p class="hint">알림 및 타이머 완료 비프음의 볼륨을 조절합니다.</p>
+            <label>알림 볼륨 (<span id="volumeValue">100</span>%)
+              <input type="range" id="volumeSlider" min="0" max="100" value="100" style="margin-top: 5px; height: 38px; cursor: pointer;">
+            </label>
+          </div>
           <h2>백업 및 복구</h2>
           <div class="panel">
             <p class="hint">로컬스토리지에 저장된 루틴, 기록, 설정을 JSON 파일로 옮길 수 있습니다.</p>
@@ -681,6 +708,8 @@
   <script>
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+    const hasCapacitor = typeof window !== "undefined" && window.Capacitor && window.Capacitor.Plugins;
+    const TimerPlugin = hasCapacitor ? window.Capacitor.Plugins.TimerPlugin : null;
     const key = "logfit.v1";
     const timerKey = "logfit.timer.v1";
     const appVersion = "0.4.5";
@@ -828,9 +857,18 @@
         history.replaceState({ view }, "", location.href);
       }
     }
+    function renderVolumeSlider() {
+      const vol = state.settings.timerVolume !== undefined ? state.settings.timerVolume : 1.0;
+      const pct = Math.round(vol * 100);
+      const slider = $("#volumeSlider");
+      const valText = $("#volumeValue");
+      if (slider) slider.value = pct;
+      if (valText) valText.textContent = pct;
+    }
     function renderAll() {
       $("#versionInfo").textContent = `LogFit v${appVersion} · SW ${cacheVersion} · Data v${schemaVersion}`;
       setTheme(state.settings.theme);
+      renderVolumeSlider();
       renderTodayRoutine();
       renderRoutineCards();
       renderWorkoutSelect();
@@ -1270,16 +1308,37 @@
       saveTimerState();
       tickTimer();
       tone(620, .08);
-      timerInterval = setInterval(() => {
-        const previous = timerRemaining;
-        tickTimer();
-        if (previous > 10 && timerRemaining <= 10 && timerRemaining > 0) tone(900, .11);
-        if (timerRemaining <= 0) {
+      
+      if (TimerPlugin) {
+        TimerPlugin.startTimer({ seconds: timerRemaining, label: timerContext.exerciseName });
+        TimerPlugin.setTimerRunningFlag({ isRunning: true });
+        
+        if (window.activeTickListener) window.activeTickListener.remove();
+        if (window.activeFinishedListener) window.activeFinishedListener.remove();
+        
+        window.activeTickListener = TimerPlugin.addListener("timerTick", (data) => {
+          timerRemaining = data.seconds;
+          timerEndAt = Date.now() + timerRemaining * 1000;
+          tickTimer();
+        });
+        
+        window.activeFinishedListener = TimerPlugin.addListener("timerFinished", () => {
           tone(520, .08);
           setTimeout(() => tone(760, .12), 130);
           stopTimer();
-        }
-      }, 1000);
+        });
+      } else {
+        timerInterval = setInterval(() => {
+          const previous = timerRemaining;
+          tickTimer();
+          if (previous > 10 && timerRemaining <= 10 && timerRemaining > 0) tone(900, .11);
+          if (timerRemaining <= 0) {
+            tone(520, .08);
+            setTimeout(() => tone(760, .12), 130);
+            stopTimer();
+          }
+        }, 1000);
+      }
     }
     function tickTimer() {
       if (timerEndAt) timerRemaining = Math.max(0, Math.ceil((timerEndAt - Date.now()) / 1000));
@@ -1303,6 +1362,12 @@
     }
     function stopTimer() {
       clearInterval(timerInterval);
+      if (TimerPlugin) {
+        TimerPlugin.stopTimer();
+        TimerPlugin.setTimerRunningFlag({ isRunning: false });
+        if (window.activeTickListener) { window.activeTickListener.remove(); window.activeTickListener = null; }
+        if (window.activeFinishedListener) { window.activeFinishedListener.remove(); window.activeFinishedListener = null; }
+      }
       timerRemaining = 0;
       timerEndAt = 0;
       timerContext = { exerciseName: "", setNo: 0 };
@@ -1321,12 +1386,33 @@
         }
         timerEndAt = Number(saved.endAt);
         timerContext = saved.context || { exerciseName: "", setNo: 0 };
+        timerRemaining = Math.max(0, Math.ceil((timerEndAt - Date.now()) / 1000));
         tickTimer();
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-          tickTimer();
-          if (timerRemaining <= 0) stopTimer();
-        }, 1000);
+        
+        if (TimerPlugin) {
+          TimerPlugin.setTimerRunningFlag({ isRunning: true });
+          
+          if (window.activeTickListener) window.activeTickListener.remove();
+          if (window.activeFinishedListener) window.activeFinishedListener.remove();
+          
+          window.activeTickListener = TimerPlugin.addListener("timerTick", (data) => {
+            timerRemaining = data.seconds;
+            timerEndAt = Date.now() + timerRemaining * 1000;
+            tickTimer();
+          });
+          
+          window.activeFinishedListener = TimerPlugin.addListener("timerFinished", () => {
+            tone(520, .08);
+            setTimeout(() => tone(760, .12), 130);
+            stopTimer();
+          });
+        } else {
+          clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            tickTimer();
+            if (timerRemaining <= 0) stopTimer();
+          }, 1000);
+        }
       } catch {
         localStorage.removeItem(timerKey);
       }
@@ -1339,8 +1425,9 @@
       const gain = ctx.createGain();
       osc.frequency.value = freq;
       osc.type = "sine";
+      const vol = (state.settings.timerVolume !== undefined ? state.settings.timerVolume : 1.0);
       gain.gain.setValueAtTime(.001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(.18, ctx.currentTime + .01);
+      gain.gain.exponentialRampToValueAtTime(.18 * vol, ctx.currentTime + .01);
       gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + duration);
       osc.connect(gain).connect(ctx.destination);
       osc.start();
@@ -1509,6 +1596,12 @@
     document.addEventListener("input", (event) => {
       const field = event.target.closest(".set-row [data-field]");
       if (field) syncDraftRow(field.closest(".set-row"));
+      if (event.target.id === "volumeSlider") {
+        const val = Number(event.target.value) / 100;
+        state.settings.timerVolume = val;
+        $("#volumeValue").textContent = event.target.value;
+        saveState();
+      }
     });
     $("#themeBtn").addEventListener("click", () => setTheme(state.settings.theme === "dark" ? "light" : "dark"));
     $("#installBtn").innerHTML = `${icon.install}<span>설치</span>`;
@@ -1603,8 +1696,12 @@
     });
     $("#skipTimerBtn").addEventListener("click", stopTimer);
     $("#addTimerBtn").addEventListener("click", () => {
+      timerRemaining = timerRemaining + 10;
       timerEndAt = Math.max(timerEndAt, Date.now()) + 10000;
       saveTimerState();
+      if (TimerPlugin) {
+        TimerPlugin.startTimer({ seconds: timerRemaining, label: timerContext.exerciseName });
+      }
       tickTimer();
     });
     window.addEventListener("beforeinstallprompt", (event) => {
@@ -1672,6 +1769,10 @@
     });
     window.addEventListener("focus", () => {
       if (timerEndAt) tickTimer();
+    });
+    window.addEventListener("pipModeChanged", (event) => {
+      const isInPip = event.detail.isInPipMode;
+      document.body.classList.toggle("pip-mode", isInPip);
     });
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
