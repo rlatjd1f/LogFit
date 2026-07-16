@@ -3,6 +3,7 @@ const APP_SHELL = [
   "./",
   "./index.html",
   "./code_artifact.html",
+  "./chart.umd.min.js",
   "./manifest.json",
   "./icon.svg",
   "./favicon.svg",

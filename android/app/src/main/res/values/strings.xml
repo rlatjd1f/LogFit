@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LogFit</string>
+    <string name="title_activity_main">LogFit</string>
+    <string name="package_name">com.logfit.app</string>
+    <string name="custom_url_scheme">com.logfit.app</string>
+</resources>
