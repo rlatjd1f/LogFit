@@ -503,8 +503,7 @@
     }
     body.pip-mode .app,
     body.pip-mode .tabs,
-    body.pip-mode .timer-context,
-    body.pip-mode .timer p,
+    body.pip-mode .confetti,
     body.pip-mode .timer .grid {
       display: none !important;
     }
@@ -512,14 +511,44 @@
       position: fixed;
       inset: 0;
       z-index: 1000;
+      width: 100%;
+      height: 100%;
       display: grid !important;
       place-items: center;
       background: #0f172a;
+      margin: 0;
       padding: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      text-align: center;
+    }
+    body.pip-mode .timer > div {
+      width: 100%;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      padding: 6px;
+    }
+    body.pip-mode .timer-context {
+      max-width: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: rgba(255,255,255,.9);
+      font-size: clamp(10px, 7vw, 18px);
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     body.pip-mode .timer strong {
-      font-size: clamp(48px, 45vw, 140px);
-      line-height: 1;
+      font-size: clamp(54px, 42vh, 132px);
+      line-height: .9;
+    }
+    body.pip-mode .timer p {
+      margin: 2px 0 0;
+      color: rgba(255,255,255,.78);
+      font-size: clamp(10px, 6vw, 17px);
+      line-height: 1.1;
     }
   </style>
 </head>
@@ -1809,7 +1838,7 @@
       if (timerEndAt) tickTimer();
     });
     window.addEventListener("pipModeChanged", (event) => {
-      const isInPip = event.detail.isInPipMode;
+      const isInPip = Boolean(event.isInPipMode ?? event.detail?.isInPipMode);
       document.body.classList.toggle("pip-mode", isInPip);
     });
     if ("serviceWorker" in navigator) {

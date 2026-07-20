@@ -41,3 +41,9 @@ test("TimerPlugin은 Capacitor Bridge 생성 전에 등록된다", () => {
   assert.ok(bridgeCreationIndex >= 0, "BridgeActivity onCreate 호출이 필요합니다.");
   assert.ok(registerIndex < bridgeCreationIndex, "TimerPlugin은 Bridge 생성 전에 등록해야 합니다.");
 });
+
+test("PIP 이벤트는 Capacitor 이벤트 객체의 상태 값을 사용한다", () => {
+  const html = fs.readFileSync(path.resolve(__dirname, "../index.html"), "utf8");
+  assert.match(html, /event\.isInPipMode \?\? event\.detail\?\.isInPipMode/);
+  assert.doesNotMatch(html, /body\.pip-mode \.timer-context,[\s\S]*display: none !important/);
+});
