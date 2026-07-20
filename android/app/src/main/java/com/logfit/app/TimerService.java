@@ -19,6 +19,9 @@ public class TimerService extends Service {
     // Android 알림 채널 중요도는 최초 생성 후 앱에서 변경할 수 없어 ID도 갱신해야 한다.
     private static final String CHANNEL_ID = "LogFitTimerChannelV2";
     private static final int NOTIFICATION_ID = 2026;
+    // Notification.EXTRA_REQUEST_PROMOTED_ONGOING (API 36.1).
+    // 문자열 extra를 사용하면 compileSdk 34를 유지하면서 구버전 fallback도 가능하다.
+    private static final String EXTRA_REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing";
     
     // 타이머 포그라운드 서비스가 실제로 구동 중인지를 절대적으로 나타내는 정적 플래그
     public static boolean isServiceRunning = false;
@@ -127,7 +130,7 @@ public class TimerService extends Service {
             text = "휴식 완료! 다음 세트를 준비하세요.";
         }
         
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
             .setSubText("LogFit 휴식 타이머")
@@ -143,8 +146,12 @@ public class TimerService extends Service {
             .setUsesChronometer(seconds > 0)
             .setChronometerCountDown(seconds > 0)
             .setOnlyAlertOnce(true)
-            .setOngoing(true)
-            .build();
+            .setOngoing(true);
+
+        // Android 16.1+에서는 아이콘과 남은 시간이 포함된 시스템 Live Update
+        // 상태 칩으로 승격을 요청한다. 지원하지 않는 OS에서는 이 extra를 무시한다.
+        builder.getExtras().putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true);
+        return builder.build();
     }
     
     private void createNotificationChannel() {

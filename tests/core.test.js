@@ -55,5 +55,14 @@ test("Android 알림은 상태 표시줄용 단색 아이콘을 사용한다", (
   assert.match(service, /setSmallIcon\(R\.drawable\.ic_stat_logfit_timer\)/);
   assert.match(service, /LogFitTimerChannelV2/);
   assert.match(service, /NotificationManager\.IMPORTANCE_DEFAULT/);
+  assert.match(service, /android\.requestPromotedOngoing/);
   assert.ok(fs.existsSync(iconPath));
+});
+
+test("Android 16 Live Update 권한을 선언한다", () => {
+  const manifest = fs.readFileSync(
+    path.resolve(__dirname, "../android/app/src/main/AndroidManifest.xml"),
+    "utf8"
+  );
+  assert.match(manifest, /android\.permission\.POST_PROMOTED_NOTIFICATIONS/);
 });
