@@ -1,8 +1,6 @@
 package com.logfit.app;
 
 import android.Manifest;
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -41,19 +39,7 @@ public class MainActivity extends BridgeActivity {
 
     // 안드로이드 OS 레벨에서 TimerService가 실제로 동작 중인지 체크하는 안전 검사 메서드
     private boolean isTimerServiceRunning() {
-        try {
-            ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-            if (manager != null) {
-                for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-                    if (TimerService.class.getName().equals(service.service.getClassName())) {
-                        return true;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+        return TimerService.isServiceRunning;
     }
 
     // Android 12+ 자동 PIP 상태 업데이트

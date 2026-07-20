@@ -18,6 +18,9 @@ public class TimerService extends Service {
     private static final String CHANNEL_ID = "LogFitTimerChannel";
     private static final int NOTIFICATION_ID = 2026;
     
+    // 타이머 포그라운드 서비스가 실제로 구동 중인지를 절대적으로 나타내는 정적 플래그
+    public static boolean isServiceRunning = false;
+    
     private NotificationManager notificationManager;
     private Timer timer;
     private int remainingSeconds = 0;
@@ -44,11 +47,13 @@ public class TimerService extends Service {
                 }
                 Log.d("LogFitTimerService", "onStartCommand START: seconds=" + remainingSeconds + ", label=" + exerciseLabel);
                 
+                isServiceRunning = true;
                 MainActivity.isTimerRunning = true;
                 startForegroundServiceWithNotification();
                 startCountdownTimer();
             } else if ("STOP".equals(action)) {
                 Log.d("LogFitTimerService", "onStartCommand STOP received");
+                isServiceRunning = false;
                 stopSelf();
             }
         }
@@ -77,6 +82,7 @@ public class TimerService extends Service {
                     TimerPlugin.sendTimerTickEvent(remainingSeconds);
                 } else {
                     Log.d("LogFitTimerService", "Timer finished. Stopping service.");
+                    isServiceRunning = false;
                     TimerPlugin.sendTimerFinishedEvent();
                     stopSelf();
                 }
@@ -132,6 +138,7 @@ public class TimerService extends Service {
     @Override
     public void onDestroy() {
         Log.d("LogFitTimerService", "onDestroy: TimerService stopping");
+        isServiceRunning = false;
         if (timer != null) {
             timer.cancel();
             timer = null;
