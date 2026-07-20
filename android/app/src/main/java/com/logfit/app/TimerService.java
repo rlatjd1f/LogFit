@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.Notification.Builder;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -13,6 +14,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.lang.reflect.Method;
 
 public class TimerService extends Service {
     // LOW 채널은 상태 표시줄에서 숨겨지므로 새 DEFAULT 채널을 사용한다.
@@ -151,7 +153,25 @@ public class TimerService extends Service {
         // Android 16.1+에서는 아이콘과 남은 시간이 포함된 시스템 Live Update
         // 상태 칩으로 승격을 요청한다. 지원하지 않는 OS에서는 이 extra를 무시한다.
         builder.getExtras().putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true);
-        return builder.build();
+        Notification notification = builder.build();
+
+        // Android 16.1+ 플랫폼 API가 있으면 상태 칩에 들어갈 짧은 MM:SS 값을
+        // 명시한다. reflection을 사용해 compileSdk 34와 구버전 호환성을 유지한다.
+        try {
+            Builder platformBuilder = Builder.recoverBuilder(this, notification);
+            Method setShortCriticalText = Builder.class.getMethod("setShortCriticalText", String.class);
+            Method setRequestPromotedOngoing = Builder.class.getMethod("setRequestPromotedOngoing", boolean.class);
+            setShortCriticalText.invoke(platformBuilder, timeString);
+            setRequestPromotedOngoing.invoke(platformBuilder, true);
+            notification = platformBuilder.build();
+            Log.d("LogFitTimerService", "Live Update status chip requested: " + timeString);
+        } catch (NoSuchMethodException ignored) {
+            // Android 16.0 이하에서는 기존 상태 표시줄 아이콘과 알림 카드 사용.
+        } catch (Exception e) {
+            Log.w("LogFitTimerService", "Failed to apply Live Update status chip", e);
+        }
+
+        return notification;
     }
     
     private void createNotificationChannel() {
