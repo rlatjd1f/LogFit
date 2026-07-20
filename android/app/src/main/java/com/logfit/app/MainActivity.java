@@ -19,15 +19,15 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
         try {
-            // 커스텀 타이머 플러그인을 브릿지에 명시적으로 수동 등록
+            // Capacitor Bridge가 생성되기 전에 커스텀 플러그인을 Builder에 등록해야 한다.
             registerPlugin(TimerPlugin.class);
-            Log.d("LogFitMainActivity", "onCreate: TimerPlugin registered successfully");
+            Log.d("LogFitMainActivity", "onCreate: TimerPlugin queued before Bridge creation");
         } catch (Exception e) {
             Log.e("LogFitMainActivity", "onCreate: Failed to register TimerPlugin", e);
         }
+
+        super.onCreate(savedInstanceState);
         
         // Android 13(Tiramisu, API 33) 이상이고 알림 권한이 승인되지 않은 경우 권한 팝업 요청
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

@@ -29,3 +29,15 @@ test("웹, 패키지, Android 버전과 서비스 워커 캐시가 일치한다"
   assert.match(html, /const cacheVersion = "v27"/);
   assert.match(sw, /logfit-pwa-v27/);
 });
+
+test("TimerPlugin은 Capacitor Bridge 생성 전에 등록된다", () => {
+  const mainActivity = fs.readFileSync(
+    path.resolve(__dirname, "../android/app/src/main/java/com/logfit/app/MainActivity.java"),
+    "utf8"
+  );
+  const registerIndex = mainActivity.indexOf("registerPlugin(TimerPlugin.class)");
+  const bridgeCreationIndex = mainActivity.indexOf("super.onCreate(savedInstanceState)");
+  assert.ok(registerIndex >= 0, "TimerPlugin 등록 코드가 필요합니다.");
+  assert.ok(bridgeCreationIndex >= 0, "BridgeActivity onCreate 호출이 필요합니다.");
+  assert.ok(registerIndex < bridgeCreationIndex, "TimerPlugin은 Bridge 생성 전에 등록해야 합니다.");
+});
