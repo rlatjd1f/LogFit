@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -44,7 +43,6 @@ public class TimerService extends Service {
                     exerciseLabel = "운동 휴식";
                 }
                 Log.d("LogFitTimerService", "onStartCommand START: seconds=" + remainingSeconds + ", label=" + exerciseLabel);
-                Toast.makeText(this, "[LogFit Native] TimerService 포그라운드 카운트다운 시작!", Toast.LENGTH_SHORT).show();
                 
                 MainActivity.isTimerRunning = true;
                 startForegroundServiceWithNotification();

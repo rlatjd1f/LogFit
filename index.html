@@ -710,9 +710,9 @@
   <script>
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-    const hasCapacitor = typeof window !== "undefined" && window.Capacitor && window.Capacitor.Plugins;
-    const TimerPlugin = hasCapacitor ? window.Capacitor.Plugins.TimerPlugin : null;
-    const AppPlugin = hasCapacitor ? window.Capacitor.Plugins.App : null;
+    const hasCapacitor = typeof window !== "undefined" && window.Capacitor;
+    const TimerPlugin = hasCapacitor ? (window.Capacitor.registerPlugin ? window.Capacitor.registerPlugin('TimerPlugin') : window.Capacitor.Plugins?.TimerPlugin) : null;
+    const AppPlugin = hasCapacitor ? (window.Capacitor.registerPlugin ? window.Capacitor.registerPlugin('App') : window.Capacitor.Plugins?.App) : null;
     const key = "logfit.v1";
     const timerKey = "logfit.timer.v1";
     const appVersion = "0.4.5";
@@ -1312,7 +1312,7 @@
       tickTimer();
       tone(620, .08);
       
-      showToast(`[JS] 타이머 시작! (Capacitor: ${!!hasCapacitor}, Plugin: ${!!TimerPlugin})`);
+      console.log(`[LogFit JS] startTimer called. hasCapacitor: ${!!hasCapacitor}, TimerPlugin:`, TimerPlugin);
       
       if (TimerPlugin) {
         TimerPlugin.startTimer({ seconds: timerRemaining, label: timerContext.exerciseName });
@@ -1333,7 +1333,7 @@
           stopTimer();
         });
       } else {
-        showToast("[JS 경고] TimerPlugin이 발견되지 않아 브라우저 기본 타이머로 동작합니다!");
+        console.warn("[LogFit JS] TimerPlugin not found, falling back to browser setInterval.");
         timerInterval = setInterval(() => {
           const previous = timerRemaining;
           tickTimer();
