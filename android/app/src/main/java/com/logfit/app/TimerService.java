@@ -15,7 +15,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class TimerService extends Service {
-    private static final String CHANNEL_ID = "LogFitTimerChannel";
+    // LOW 채널은 상태 표시줄에서 숨겨지므로 새 DEFAULT 채널을 사용한다.
+    // Android 알림 채널 중요도는 최초 생성 후 앱에서 변경할 수 없어 ID도 갱신해야 한다.
+    private static final String CHANNEL_ID = "LogFitTimerChannelV2";
     private static final int NOTIFICATION_ID = 2026;
     
     // 타이머 포그라운드 서비스가 실제로 구동 중인지를 절대적으로 나타내는 정적 플래그
@@ -136,6 +138,7 @@ public class TimerService extends Service {
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setWhen(endAtMillis)
             .setUsesChronometer(seconds > 0)
             .setChronometerCountDown(seconds > 0)
@@ -149,9 +152,11 @@ public class TimerService extends Service {
             NotificationChannel serviceChannel = new NotificationChannel(
                 CHANNEL_ID,
                 "LogFit 운동 휴식 타이머",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             );
             serviceChannel.setDescription("운동 후 휴식 카운트다운 알림 채널입니다.");
+            serviceChannel.setSound(null, null);
+            serviceChannel.enableVibration(false);
             notificationManager.createNotificationChannel(serviceChannel);
         }
     }

@@ -53,5 +53,7 @@ test("Android 알림은 상태 표시줄용 단색 아이콘을 사용한다", (
   const service = fs.readFileSync(path.join(root, "android/app/src/main/java/com/logfit/app/TimerService.java"), "utf8");
   const iconPath = path.join(root, "android/app/src/main/res/drawable/ic_stat_logfit_timer.xml");
   assert.match(service, /setSmallIcon\(R\.drawable\.ic_stat_logfit_timer\)/);
+  assert.match(service, /LogFitTimerChannelV2/);
+  assert.match(service, /NotificationManager\.IMPORTANCE_DEFAULT/);
   assert.ok(fs.existsSync(iconPath));
 });
