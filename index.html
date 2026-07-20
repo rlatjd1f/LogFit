@@ -1312,6 +1312,8 @@
       tickTimer();
       tone(620, .08);
       
+      showToast(`[JS] 타이머 시작! (Capacitor: ${!!hasCapacitor}, Plugin: ${!!TimerPlugin})`);
+      
       if (TimerPlugin) {
         TimerPlugin.startTimer({ seconds: timerRemaining, label: timerContext.exerciseName });
         TimerPlugin.setTimerRunningFlag({ isRunning: true });
@@ -1331,6 +1333,7 @@
           stopTimer();
         });
       } else {
+        showToast("[JS 경고] TimerPlugin이 발견되지 않아 브라우저 기본 타이머로 동작합니다!");
         timerInterval = setInterval(() => {
           const previous = timerRemaining;
           tickTimer();

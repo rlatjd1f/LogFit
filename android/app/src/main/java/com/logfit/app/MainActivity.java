@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.app.PictureInPictureParams;
 import android.util.Log;
 import android.util.Rational;
+import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
@@ -27,8 +28,10 @@ public class MainActivity extends BridgeActivity {
             // 커스텀 타이머 플러그인을 브릿지에 명시적으로 수동 등록
             registerPlugin(TimerPlugin.class);
             Log.d("LogFitMainActivity", "onCreate: TimerPlugin registered successfully");
+            Toast.makeText(this, "[LogFit Native] MainActivity 초기화 & TimerPlugin 수동 등록 완료", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.e("LogFitMainActivity", "onCreate: Failed to register TimerPlugin", e);
+            Toast.makeText(this, "[LogFit Native 오류] TimerPlugin 등록 실패: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
         
         // Android 13(Tiramisu, API 33) 이상이고 알림 권한이 승인되지 않은 경우 권한 팝업 요청
@@ -71,8 +74,10 @@ public class MainActivity extends BridgeActivity {
                         }
                         setPictureInPictureParams(builder.build());
                         Log.d("LogFitMainActivity", "updatePipParams: setPictureInPictureParams applied, autoEnter=" + enable);
+                        Toast.makeText(MainActivity.this, "[LogFit Native] PIP 파라미터 갱신! autoEnter=" + enable, Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
                         Log.e("LogFitMainActivity", "updatePipParams error: ", e);
+                        Toast.makeText(MainActivity.this, "[LogFit Native 오류] PIP 파라미터 갱신 실패", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -85,6 +90,7 @@ public class MainActivity extends BridgeActivity {
         // 메모리 플래그 혹은 실제 타이머 서비스 백그라운드 구동 여부 검사
         boolean shouldEnterPip = isTimerRunning || isTimerServiceRunning();
         Log.d("LogFitMainActivity", "onUserLeaveHint: isTimerRunning=" + isTimerRunning + ", serviceRunning=" + isTimerServiceRunning() + " -> shouldEnterPip=" + shouldEnterPip);
+        Toast.makeText(this, "[LogFit Native] 홈이탈 감지! enterPipTarget=" + shouldEnterPip, Toast.LENGTH_LONG).show();
         
         if (shouldEnterPip && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
@@ -92,8 +98,10 @@ public class MainActivity extends BridgeActivity {
                 builder.setAspectRatio(new Rational(1, 1));
                 boolean success = enterPictureInPictureMode(builder.build());
                 Log.d("LogFitMainActivity", "onUserLeaveHint: enterPictureInPictureMode returned " + success);
+                Toast.makeText(this, "[LogFit Native] PIP 수동 진입 결과: " + success, Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 Log.e("LogFitMainActivity", "onUserLeaveHint error: ", e);
+                Toast.makeText(this, "[LogFit Native 오류] PIP 수동 진입 실패: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -102,6 +110,7 @@ public class MainActivity extends BridgeActivity {
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
         Log.d("LogFitMainActivity", "onPictureInPictureModeChanged: isInPipMode=" + isInPictureInPictureMode);
+        Toast.makeText(this, "[LogFit Native] PIP 상태 변경: isInPip=" + isInPictureInPictureMode, Toast.LENGTH_SHORT).show();
         if (getBridge() != null) {
             // 웹뷰(Window 객체)로 pipModeChanged 커스텀 이벤트를 데이터와 함께 발송
             getBridge().triggerWindowJSEvent("pipModeChanged", "{ \"isInPipMode\": " + isInPictureInPictureMode + " }");

@@ -2,6 +2,7 @@ package com.logfit.app;
 
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -27,6 +28,7 @@ public class TimerPlugin extends Plugin {
         Log.d("LogFitTimerPlugin", "startTimer API called: seconds=" + seconds + ", label=" + label);
 
         try {
+            Toast.makeText(getContext(), "[LogFit Native] TimerPlugin.startTimer 호출 수신! sec=" + seconds, Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(getContext(), TimerService.class);
             intent.setAction("START");
             intent.putExtra("seconds", seconds);
@@ -52,6 +54,7 @@ public class TimerPlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             Log.e("LogFitTimerPlugin", "startTimer error: ", e);
+            Toast.makeText(getContext(), "[LogFit Native 오류] startTimer 실패: " + e.getMessage(), Toast.LENGTH_LONG).show();
             call.reject("Failed to start timer service: " + e.getMessage());
         }
     }
@@ -60,6 +63,7 @@ public class TimerPlugin extends Plugin {
     public void stopTimer(PluginCall call) {
         Log.d("LogFitTimerPlugin", "stopTimer API called");
         try {
+            Toast.makeText(getContext(), "[LogFit Native] TimerPlugin.stopTimer 호출 수신!", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(getContext(), TimerService.class);
             intent.setAction("STOP");
             getContext().stopService(intent);
@@ -77,6 +81,7 @@ public class TimerPlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             Log.e("LogFitTimerPlugin", "stopTimer error: ", e);
+            Toast.makeText(getContext(), "[LogFit Native 오류] stopTimer 실패: " + e.getMessage(), Toast.LENGTH_LONG).show();
             call.reject("Failed to stop timer service: " + e.getMessage());
         }
     }
