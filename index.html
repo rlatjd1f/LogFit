@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" href="./icon-192.png">
   <title>LogFit</title>
   <script src="./chart.umd.min.js"></script>
+  <script src="./logfit-core.js"></script>
   <style>
     :root {
       color-scheme: light;
@@ -521,7 +522,6 @@
       line-height: 1;
     }
   </style>
-  <script src="capacitor.js"></script>
 </head>
 <body>
   <div class="app" id="app">
@@ -715,8 +715,10 @@
     const AppPlugin = hasCapacitor ? (window.Capacitor.registerPlugin ? window.Capacitor.registerPlugin('App') : window.Capacitor.Plugins?.App) : null;
     const key = "logfit.v1";
     const timerKey = "logfit.timer.v1";
-    const appVersion = "0.4.5";
-    const cacheVersion = "v26";
+    const { escapeHtml, normalizeTimerSnapshot } = window.LogFitCore;
+    const selectorEscape = (value) => CSS.escape(String(value));
+    const appVersion = "0.5.0";
+    const cacheVersion = "v27";
     const schemaVersion = 4;
     const today = () => {
       const now = new Date();
@@ -902,15 +904,15 @@
       $("#todayRoutineCard").innerHTML = completed ? `
         <div>
           <p class="meta">오늘 운동 완료</p>
-          <p class="title">${completed.routineName || "루틴"} 완료됨</p>
+          <p class="title">${escapeHtml(completed.routineName || "루틴")} 완료됨</p>
         </div>
         <p class="hint">자정이 지나면 다음 로테이션이 표시됩니다.</p>
       ` : routine ? `
         <div>
           <p class="meta">오늘 시작할 루틴</p>
-          <p class="title">${routine.name}</p>
+          <p class="title">${escapeHtml(routine.name)}</p>
         </div>
-        <div class="chips">${routine.exercises.slice(0, 5).map((ex) => `<span class="chip">${ex.name}</span>`).join("")}</div>
+        <div class="chips">${routine.exercises.slice(0, 5).map((ex) => `<span class="chip">${escapeHtml(ex.name)}</span>`).join("")}</div>
       ` : '<div class="empty">루틴 관리에서 첫 루틴을 만들어보세요.</div>';
     }
     function routineProgress(routine) {
@@ -940,26 +942,26 @@
         card.innerHTML = `
           <div class="card-top">
             <div>
-              <p class="title">${routine.name}</p>
+              <p class="title">${escapeHtml(routine.name)}</p>
               <div class="meta">${routine.exercises.length}개 운동 · ${p.done}/${p.total}세트 완료${completedToday ? " · 오늘 운동 완료" : ""}</div>
             </div>
             <div class="toolbar">
               <span class="status-badge ${completedToday ? "done" : status.type}">${completedToday ? "오늘 완료" : status.label}</span>
-              <button class="icon-btn ghost" title="수정" aria-label="수정" data-edit="${routine.id}">${icon.settings.split("<span>")[0]}</button>
+              <button class="icon-btn ghost" title="수정" aria-label="수정" data-edit="${escapeHtml(routine.id)}">${icon.settings.split("<span>")[0]}</button>
             </div>
           </div>
-          <div class="chips">${routine.exercises.slice(0, 4).map((ex) => `<span class="chip">${ex.name}</span>`).join("")}</div>
+          <div class="chips">${routine.exercises.slice(0, 4).map((ex) => `<span class="chip">${escapeHtml(ex.name)}</span>`).join("")}</div>
           <div class="progress"><div class="bar" style="width:${p.pct}%"></div></div>
           <div class="grid two">
-            <button class="primary" data-start="${routine.id}">운동하기</button>
-            <button class="reset-action" data-reset-routine="${routine.id}" ${p.done ? "" : "disabled"}>초기화</button>
+            <button class="primary" data-start="${escapeHtml(routine.id)}">운동하기</button>
+            <button class="reset-action" data-reset-routine="${escapeHtml(routine.id)}" ${p.done ? "" : "disabled"}>초기화</button>
           </div>`;
         root.append(card);
       });
     }
     function renderWorkoutSelect() {
       const select = $("#workoutRoutine");
-      select.innerHTML = state.routines.map((r) => `<option value="${r.id}">${r.name}</option>`).join("");
+      select.innerHTML = state.routines.map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`).join("");
       if (!state.routines.some((r) => r.id === activeRoutineId)) activeRoutineId = state.routines[0]?.id || "";
       select.value = activeRoutineId;
     }
@@ -1058,7 +1060,7 @@
     }
     function applyWorkoutDraftToRoutine(routine) {
       routine.exercises.forEach((ex) => {
-        $$(`.set-row[data-routine="${routine.id}"][data-ex="${ex.id}"]`).forEach(syncDraftRow);
+        $$(`.set-row[data-routine="${selectorEscape(routine.id)}"][data-ex="${selectorEscape(ex.id)}"]`).forEach(syncDraftRow);
         const draft = getWorkoutDraft(routine.id, ex);
         ex.targetSets = draft.targetSets;
         ex.setTargets = draft.setTargets.map((target, index) => ({
@@ -1110,17 +1112,17 @@
         card.innerHTML = `
           <div class="card-top">
             <div>
-              <p class="title">${ex.name}</p>
-              <div class="meta">${ex.category} · 목표 ${setCount}세트 · 휴식 ${ex.restTime}초</div>
+              <p class="title">${escapeHtml(ex.name)}</p>
+              <div class="meta">${escapeHtml(ex.category)} · 목표 ${setCount}세트 · 휴식 ${ex.restTime}초</div>
             </div>
             <div class="toolbar">
               <span class="chip">${doneCount}/${setCount}</span>
-              <button class="ghost" data-reset-ex="${ex.id}" data-routine="${routine.id}" ${doneCount ? "" : "disabled"}>초기화</button>
+              <button class="ghost" data-reset-ex="${escapeHtml(ex.id)}" data-routine="${escapeHtml(routine.id)}" ${doneCount ? "" : "disabled"}>초기화</button>
             </div>
           </div>
           <div class="set-count-actions">
-            <button type="button" data-adjust-workout-sets="${ex.id}" data-routine="${routine.id}" data-dir="-1" ${setCount <= 1 ? "disabled" : ""}>- 세트</button>
-            <button type="button" data-adjust-workout-sets="${ex.id}" data-routine="${routine.id}" data-dir="1" ${setCount >= 12 ? "disabled" : ""}>+ 세트</button>
+            <button type="button" data-adjust-workout-sets="${escapeHtml(ex.id)}" data-routine="${escapeHtml(routine.id)}" data-dir="-1" ${setCount <= 1 ? "disabled" : ""}>- 세트</button>
+            <button type="button" data-adjust-workout-sets="${escapeHtml(ex.id)}" data-routine="${escapeHtml(routine.id)}" data-dir="1" ${setCount >= 12 ? "disabled" : ""}>+ 세트</button>
           </div>
           <div>${Array.from({ length: setCount }, (_, i) => setRow(routine, ex, i + 1)).join("")}</div>`;
         root.append(card);
@@ -1137,7 +1139,7 @@
       const weight = saved?.weight ?? target.weight;
       const reps = saved?.reps ?? target.reps;
       return `
-        <div class="set-row ${saved ? "completed" : ""}" data-routine="${routine.id}" data-ex="${ex.id}" data-set="${setNo}">
+        <div class="set-row ${saved ? "completed" : ""}" data-routine="${escapeHtml(routine.id)}" data-ex="${escapeHtml(ex.id)}" data-set="${setNo}">
           <strong>${setNo} Set</strong>
           <label>kg<input type="number" inputmode="decimal" data-field="weight" value="${weight}"></label>
           <label>Reps<div class="stepper"><button type="button" data-step="-1">-</button><input type="number" inputmode="numeric" data-field="reps" value="${reps}"><button type="button" data-step="1">+</button></div></label>
@@ -1152,15 +1154,15 @@
         <article class="card">
           <div class="card-top">
             <div>
-              <p class="title">${index + 1}. ${routine.name}</p>
+              <p class="title">${index + 1}. ${escapeHtml(routine.name)}</p>
               <div class="meta">${routine.exercises.length}개 운동</div>
             </div>
-            <button class="icon-btn ghost" data-edit="${routine.id}" aria-label="수정">${icon.settings.split("<span>")[0]}</button>
+            <button class="icon-btn ghost" data-edit="${escapeHtml(routine.id)}" aria-label="수정">${icon.settings.split("<span>")[0]}</button>
           </div>
-          <div class="chips">${routine.exercises.map((ex) => `<span class="chip">${ex.name}</span>`).join("")}</div>
+          <div class="chips">${routine.exercises.map((ex) => `<span class="chip">${escapeHtml(ex.name)}</span>`).join("")}</div>
           <div class="grid two">
-            <button data-move="${routine.id}" data-dir="-1">위로</button>
-            <button data-move="${routine.id}" data-dir="1">아래로</button>
+            <button data-move="${escapeHtml(routine.id)}" data-dir="-1">위로</button>
+            <button data-move="${escapeHtml(routine.id)}" data-dir="1">아래로</button>
           </div>
         </article>`).join("") || '<div class="empty">루틴을 추가하세요.</div>';
     }
@@ -1194,16 +1196,16 @@
       ).slice(0, 18);
       $("#exercisePicker").innerHTML = list.map((ex) => `
         <div class="exercise-pick">
-          <div><strong>${ex.name}</strong><div class="meta">${ex.category}</div></div>
-          <button type="button" data-add-ex="${ex.id}">추가</button>
+          <div><strong>${escapeHtml(ex.name)}</strong><div class="meta">${escapeHtml(ex.category)}</div></div>
+          <button type="button" data-add-ex="${escapeHtml(ex.id)}">추가</button>
         </div>`).join("") || '<div class="empty">검색 결과가 없습니다.</div>';
     }
     function renderBuilder() {
       $("#routineBuilder").innerHTML = editingExercises.map((ex, index) => `
-        <div class="builder-item" data-builder="${ex.id}">
+        <div class="builder-item" data-builder="${escapeHtml(ex.id)}">
           <div class="status-row">
-            <strong>${index + 1}. ${ex.name}</strong>
-            <button type="button" class="icon-btn danger" data-remove-builder="${ex.id}" aria-label="삭제">×</button>
+            <strong>${index + 1}. ${escapeHtml(ex.name)}</strong>
+            <button type="button" class="icon-btn danger" data-remove-builder="${escapeHtml(ex.id)}" aria-label="삭제">×</button>
           </div>
           <div class="grid two">
             <label>세트<input type="number" min="1" max="12" step="1" data-edit-field="targetSets" value="${ex.targetSets}"></label>
@@ -1214,16 +1216,16 @@
             <label>목표 중량<input type="number" min="0" step="0.5" data-edit-field="targetWeight" value="${ex.targetWeight}"></label>
           </div>
           <div class="builder-actions">
-            <button type="button" data-order="${ex.id}" data-dir="-1">↑</button>
-            <button type="button" data-order="${ex.id}" data-dir="1">↓</button>
-            <button type="button" data-plus-set="${ex.id}">+세트</button>
-            <button type="button" data-minus-set="${ex.id}">-세트</button>
+            <button type="button" data-order="${escapeHtml(ex.id)}" data-dir="-1">↑</button>
+            <button type="button" data-order="${escapeHtml(ex.id)}" data-dir="1">↓</button>
+            <button type="button" data-plus-set="${escapeHtml(ex.id)}">+세트</button>
+            <button type="button" data-minus-set="${escapeHtml(ex.id)}">-세트</button>
           </div>
         </div>`).join("") || '<div class="empty">운동을 추가하세요.</div>';
     }
     function renderChartPicker() {
       const exercises = [...new Map(state.history.map((log) => [log.exerciseId, log.exerciseName])).entries()];
-      $("#chartExercise").innerHTML = exercises.map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
+      $("#chartExercise").innerHTML = exercises.map(([id, name]) => `<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`).join("");
     }
     function renderReport() {
       $$("[data-report-tab]").forEach((button) => button.classList.toggle("active", button.dataset.reportTab === activeReportTab));
@@ -1249,8 +1251,8 @@
           <article class="history-item">
             <div class="status-row">
               <div>
-                <p class="title">${log.exerciseName}</p>
-                <div class="meta">${log.date} · ${log.routineName || "루틴"} · ${log.completedSets.length}세트</div>
+                <p class="title">${escapeHtml(log.exerciseName)}</p>
+                <div class="meta">${escapeHtml(log.date)} · ${escapeHtml(log.routineName || "루틴")} · ${log.completedSets.length}세트</div>
               </div>
               <span class="chip">${Math.round(volume)}kg</span>
             </div>
@@ -1302,7 +1304,56 @@
         }
       });
     }
-    function startTimer(seconds, context = {}) {
+    async function removeNativeTimerListeners() {
+      const handles = [window.activeTickListener, window.activeFinishedListener];
+      window.activeTickListener = null;
+      window.activeFinishedListener = null;
+      await Promise.all(handles.filter(Boolean).map(async (handle) => {
+        const resolved = await Promise.resolve(handle);
+        await resolved?.remove?.();
+      }));
+    }
+    async function attachNativeTimerListeners() {
+      if (!TimerPlugin) return;
+      await removeNativeTimerListeners();
+      window.activeTickListener = await TimerPlugin.addListener("timerTick", (data) => {
+        timerRemaining = Number(data.seconds) || 0;
+        timerEndAt = Date.now() + timerRemaining * 1000;
+        saveTimerState();
+        tickTimer();
+      });
+      window.activeFinishedListener = await TimerPlugin.addListener("timerFinished", () => {
+        tone(520, .08);
+        setTimeout(() => tone(760, .12), 130);
+        stopTimer();
+      });
+    }
+    async function startNativeTimer() {
+      if (!TimerPlugin) return false;
+      try {
+        await TimerPlugin.startTimer({ seconds: timerRemaining, label: timerContext.exerciseName });
+        await attachNativeTimerListeners();
+        return true;
+      } catch (error) {
+        console.error("[LogFit] 네이티브 타이머 시작 실패", error);
+        showToast("백그라운드 타이머를 시작하지 못했습니다.");
+        return false;
+      }
+    }
+    function startBrowserTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        const previous = timerRemaining;
+        tickTimer();
+        if (previous > 10 && timerRemaining <= 10 && timerRemaining > 0) tone(900, .11);
+        if (timerRemaining <= 0) {
+          tone(520, .08);
+          setTimeout(() => tone(760, .12), 130);
+          stopTimer();
+        }
+      }, 1000);
+    }
+    async function startTimer(seconds, context = {}) {
       clearInterval(timerInterval);
       timerRemaining = Number(seconds) || 60;
       timerEndAt = Date.now() + timerRemaining * 1000;
@@ -1312,39 +1363,7 @@
       tickTimer();
       tone(620, .08);
       
-      console.log(`[LogFit JS] startTimer called. hasCapacitor: ${!!hasCapacitor}, TimerPlugin:`, TimerPlugin);
-      
-      if (TimerPlugin) {
-        TimerPlugin.startTimer({ seconds: timerRemaining, label: timerContext.exerciseName });
-        TimerPlugin.setTimerRunningFlag({ isRunning: true });
-        
-        if (window.activeTickListener) window.activeTickListener.remove();
-        if (window.activeFinishedListener) window.activeFinishedListener.remove();
-        
-        window.activeTickListener = TimerPlugin.addListener("timerTick", (data) => {
-          timerRemaining = data.seconds;
-          timerEndAt = Date.now() + timerRemaining * 1000;
-          tickTimer();
-        });
-        
-        window.activeFinishedListener = TimerPlugin.addListener("timerFinished", () => {
-          tone(520, .08);
-          setTimeout(() => tone(760, .12), 130);
-          stopTimer();
-        });
-      } else {
-        console.warn("[LogFit JS] TimerPlugin not found, falling back to browser setInterval.");
-        timerInterval = setInterval(() => {
-          const previous = timerRemaining;
-          tickTimer();
-          if (previous > 10 && timerRemaining <= 10 && timerRemaining > 0) tone(900, .11);
-          if (timerRemaining <= 0) {
-            tone(520, .08);
-            setTimeout(() => tone(760, .12), 130);
-            stopTimer();
-          }
-        }, 1000);
-      }
+      if (!await startNativeTimer()) startBrowserTimer();
     }
     function tickTimer() {
       if (timerEndAt) timerRemaining = Math.max(0, Math.ceil((timerEndAt - Date.now()) / 1000));
@@ -1366,13 +1385,11 @@
       updateTimerDisplayMode();
       history.replaceState({ view: "dashboard" }, "", location.href);
     }
-    function stopTimer() {
+    async function stopTimer() {
       clearInterval(timerInterval);
       if (TimerPlugin) {
-        TimerPlugin.stopTimer();
-        TimerPlugin.setTimerRunningFlag({ isRunning: false });
-        if (window.activeTickListener) { window.activeTickListener.remove(); window.activeTickListener = null; }
-        if (window.activeFinishedListener) { window.activeFinishedListener.remove(); window.activeFinishedListener = null; }
+        try { await TimerPlugin.stopTimer(); } catch (error) { console.error("[LogFit] 네이티브 타이머 종료 실패", error); }
+        await removeNativeTimerListeners();
       }
       timerRemaining = 0;
       timerEndAt = 0;
@@ -1383,9 +1400,19 @@
     function saveTimerState() {
       localStorage.setItem(timerKey, JSON.stringify({ endAt: timerEndAt, context: timerContext }));
     }
-    function restoreTimerState() {
+    async function restoreTimerState() {
       try {
-        const saved = JSON.parse(localStorage.getItem(timerKey));
+        let saved = JSON.parse(localStorage.getItem(timerKey));
+        if (TimerPlugin) {
+          try {
+            const nativeState = normalizeTimerSnapshot(await TimerPlugin.getTimerState());
+            if (nativeState) {
+              saved = { endAt: nativeState.endAt, context: { exerciseName: nativeState.label, setNo: saved?.context?.setNo || 0 } };
+            }
+          } catch (error) {
+            console.error("[LogFit] 네이티브 타이머 상태 조회 실패", error);
+          }
+        }
         if (!saved?.endAt || saved.endAt <= Date.now()) {
           localStorage.removeItem(timerKey);
           return;
@@ -1396,28 +1423,9 @@
         tickTimer();
         
         if (TimerPlugin) {
-          TimerPlugin.setTimerRunningFlag({ isRunning: true });
-          
-          if (window.activeTickListener) window.activeTickListener.remove();
-          if (window.activeFinishedListener) window.activeFinishedListener.remove();
-          
-          window.activeTickListener = TimerPlugin.addListener("timerTick", (data) => {
-            timerRemaining = data.seconds;
-            timerEndAt = Date.now() + timerRemaining * 1000;
-            tickTimer();
-          });
-          
-          window.activeFinishedListener = TimerPlugin.addListener("timerFinished", () => {
-            tone(520, .08);
-            setTimeout(() => tone(760, .12), 130);
-            stopTimer();
-          });
+          await attachNativeTimerListeners();
         } else {
-          clearInterval(timerInterval);
-          timerInterval = setInterval(() => {
-            tickTimer();
-            if (timerRemaining <= 0) stopTimer();
-          }, 1000);
+          startBrowserTimer();
         }
       } catch {
         localStorage.removeItem(timerKey);
@@ -1432,6 +1440,10 @@
       osc.frequency.value = freq;
       osc.type = "sine";
       const vol = (state.settings.timerVolume !== undefined ? state.settings.timerVolume : 1.0);
+      if (vol <= 0) {
+        ctx.close();
+        return;
+      }
       gain.gain.setValueAtTime(.001, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(.18 * vol, ctx.currentTime + .01);
       gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + duration);
@@ -1558,7 +1570,7 @@
         const routine = state.routines.find((item) => item.id === adjustWorkoutSets.dataset.routine);
         const ex = routine?.exercises.find((item) => item.id === adjustWorkoutSets.dataset.adjustWorkoutSets);
         if (!routine || !ex) return;
-        $$(`.set-row[data-routine="${routine.id}"][data-ex="${ex.id}"]`).forEach(syncDraftRow);
+        $$(`.set-row[data-routine="${selectorEscape(routine.id)}"][data-ex="${selectorEscape(ex.id)}"]`).forEach(syncDraftRow);
         const nextCount = getWorkoutSetCount(routine.id, ex) + Number(adjustWorkoutSets.dataset.dir);
         setWorkoutSetCount(routine.id, ex, nextCount);
         removeLogsAfterSet(routine.id, ex.id, getWorkoutSetCount(routine.id, ex));
@@ -1701,12 +1713,12 @@
       }
     });
     $("#skipTimerBtn").addEventListener("click", stopTimer);
-    $("#addTimerBtn").addEventListener("click", () => {
+    $("#addTimerBtn").addEventListener("click", async () => {
       timerRemaining = timerRemaining + 10;
       timerEndAt = Math.max(timerEndAt, Date.now()) + 10000;
       saveTimerState();
       if (TimerPlugin) {
-        TimerPlugin.startTimer({ seconds: timerRemaining, label: timerContext.exerciseName });
+        await startNativeTimer();
       }
       tickTimer();
     });

@@ -24,7 +24,12 @@ public class TimerService extends Service {
     private NotificationManager notificationManager;
     private Timer timer;
     private int remainingSeconds = 0;
+    private long endAtMillis = 0L;
     private String exerciseLabel = "운동 휴식";
+
+    public static int currentRemainingSeconds = 0;
+    public static long currentEndAtMillis = 0L;
+    public static String currentExerciseLabel = "운동 휴식";
     
     @Override
     public void onCreate() {
@@ -41,6 +46,7 @@ public class TimerService extends Service {
             String action = intent.getAction();
             if ("START".equals(action)) {
                 remainingSeconds = intent.getIntExtra("seconds", 90);
+                endAtMillis = System.currentTimeMillis() + remainingSeconds * 1000L;
                 exerciseLabel = intent.getStringExtra("label");
                 if (exerciseLabel == null || exerciseLabel.isEmpty()) {
                     exerciseLabel = "운동 휴식";
@@ -48,6 +54,9 @@ public class TimerService extends Service {
                 Log.d("LogFitTimerService", "onStartCommand START: seconds=" + remainingSeconds + ", label=" + exerciseLabel);
                 
                 isServiceRunning = true;
+                currentRemainingSeconds = remainingSeconds;
+                currentEndAtMillis = endAtMillis;
+                currentExerciseLabel = exerciseLabel;
                 MainActivity.isTimerRunning = true;
                 startForegroundServiceWithNotification();
                 startCountdownTimer();
@@ -74,8 +83,9 @@ public class TimerService extends Service {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                remainingSeconds = TimerState.remainingSeconds(endAtMillis, System.currentTimeMillis());
+                currentRemainingSeconds = remainingSeconds;
                 if (remainingSeconds > 0) {
-                    remainingSeconds--;
                     updateNotification(remainingSeconds);
                     
                     // Capacitor 플러그인을 통해 웹뷰로 실시간 남은 초 전송
@@ -83,6 +93,8 @@ public class TimerService extends Service {
                 } else {
                     Log.d("LogFitTimerService", "Timer finished. Stopping service.");
                     isServiceRunning = false;
+                    currentRemainingSeconds = 0;
+                    currentEndAtMillis = 0L;
                     TimerPlugin.sendTimerFinishedEvent();
                     stopSelf();
                 }
@@ -139,6 +151,8 @@ public class TimerService extends Service {
     public void onDestroy() {
         Log.d("LogFitTimerService", "onDestroy: TimerService stopping");
         isServiceRunning = false;
+        currentRemainingSeconds = 0;
+        currentEndAtMillis = 0L;
         if (timer != null) {
             timer.cancel();
             timer = null;

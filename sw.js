@@ -1,7 +1,8 @@
-const CACHE_NAME = "logfit-pwa-v26";
+const CACHE_NAME = "logfit-pwa-v27";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./logfit-core.js",
   "./code_artifact.html",
   "./chart.umd.min.js",
   "./manifest.json",
@@ -52,7 +53,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           return response;
         })
-        .catch(() => caches.match("./index.html"));
+        .catch(() => Response.error());
     })
   );
 });

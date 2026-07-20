@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package com.logfit.app;
 
 import static org.junit.Assert.*;
 
@@ -12,7 +12,8 @@ import org.junit.Test;
 public class ExampleUnitTest {
 
     @Test
-    public void addition_isCorrect() throws Exception {
-        assertEquals(4, 2 + 2);
+    public void remainingSecondsRoundsUpAndNeverBecomesNegative() {
+        assertEquals(3, TimerState.remainingSeconds(12_500L, 10_000L));
+        assertEquals(0, TimerState.remainingSeconds(9_000L, 10_000L));
     }
 }

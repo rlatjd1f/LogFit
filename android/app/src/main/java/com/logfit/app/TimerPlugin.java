@@ -98,6 +98,16 @@ public class TimerPlugin extends Plugin {
         call.resolve();
     }
 
+    @PluginMethod
+    public void getTimerState(PluginCall call) {
+        JSObject state = new JSObject();
+        state.put("isRunning", TimerService.isServiceRunning);
+        state.put("seconds", TimerService.currentRemainingSeconds);
+        state.put("endAt", TimerService.currentEndAtMillis);
+        state.put("label", TimerService.currentExerciseLabel);
+        call.resolve(state);
+    }
+
     // TimerService에서 매초 틱 신호를 웹뷰로 전송하는 헬퍼 메서드
     public static void sendTimerTickEvent(int secondsRemaining) {
         if (instance != null) {

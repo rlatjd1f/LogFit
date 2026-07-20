@@ -1,11 +1,13 @@
 {
   "name": "logfit",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "description": "N분할 순환 루틴 기반 PWA 운동 일지 모바일 앱",
   "main": "index.html",
   "scripts": {
-    "build": "mkdir -p www && cp index.html manifest.json sw.js chart.umd.min.js code_artifact.html icon.svg favicon.svg favicon-16.png favicon-32.png icon-192.png icon-512.png www/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rm -rf www && mkdir -p www && cp index.html logfit-core.js manifest.json sw.js chart.umd.min.js code_artifact.html icon.svg favicon.svg favicon-16.png favicon-32.png icon-192.png icon-512.png www/",
+    "test": "node --test tests/*.test.js",
+    "android:sync": "npm run build && cap sync android",
+    "android:test": "npm run android:sync && ./android/gradlew -p android testDebugUnitTest"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
