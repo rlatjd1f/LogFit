@@ -130,7 +130,9 @@ public class TimerService extends Service {
             .setContentText(text)
             .setSubText("LogFit 휴식 타이머")
             .setStyle(new NotificationCompat.BigTextStyle().bigText(text + "\n타이머를 누르면 운동 화면으로 돌아갑니다."))
-            .setSmallIcon(R.mipmap.ic_launcher)
+            // 상태 표시줄에는 투명 배경의 단색 small icon만 안정적으로 표시된다.
+            .setSmallIcon(R.drawable.ic_stat_logfit_timer)
+            .setColor(0xFF1769E0)
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
