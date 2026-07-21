@@ -17,6 +17,8 @@ import java.util.TimerTask;
 import java.lang.reflect.Method;
 
 public class TimerService extends Service {
+    private static final String ACTION_START = "START";
+    private static final String ACTION_STOP = "STOP";
     // LOW 채널은 상태 표시줄에서 숨겨지므로 새 DEFAULT 채널을 사용한다.
     // Android 알림 채널 중요도는 최초 생성 후 앱에서 변경할 수 없어 ID도 갱신해야 한다.
     private static final String CHANNEL_ID = "LogFitTimerChannelV2";
@@ -51,12 +53,14 @@ public class TimerService extends Service {
         Log.d("LogFitTimerService", "onStartCommand called: intent=" + (intent != null ? intent.getAction() : "null"));
         if (intent != null) {
             String action = intent.getAction();
-            if ("START".equals(action)) {
-                remainingSeconds = intent.getIntExtra("seconds", 90);
+            if (ACTION_START.equals(action)) {
+                remainingSeconds = Math.max(1, Math.min(intent.getIntExtra("seconds", 90), 3600));
                 endAtMillis = System.currentTimeMillis() + remainingSeconds * 1000L;
                 exerciseLabel = intent.getStringExtra("label");
                 if (exerciseLabel == null || exerciseLabel.isEmpty()) {
                     exerciseLabel = "운동 휴식";
+                } else if (exerciseLabel.length() > 60) {
+                    exerciseLabel = exerciseLabel.substring(0, 60);
                 }
                 Log.d("LogFitTimerService", "onStartCommand START: seconds=" + remainingSeconds + ", label=" + exerciseLabel);
                 
@@ -67,7 +71,7 @@ public class TimerService extends Service {
                 MainActivity.isTimerRunning = true;
                 startForegroundServiceWithNotification();
                 startCountdownTimer();
-            } else if ("STOP".equals(action)) {
+            } else if (ACTION_STOP.equals(action)) {
                 Log.d("LogFitTimerService", "onStartCommand STOP received");
                 isServiceRunning = false;
                 stopSelf();
@@ -124,6 +128,15 @@ public class TimerService extends Service {
             notificationIntent, 
             PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
         );
+
+        Intent stopIntent = new Intent(this, TimerService.class);
+        stopIntent.setAction(ACTION_STOP);
+        PendingIntent stopPendingIntent = PendingIntent.getService(
+            this,
+            1,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
         
         String timeString = String.format("%02d:%02d", seconds / 60, seconds % 60);
         String title = exerciseLabel + " - 휴식 중";
@@ -141,6 +154,7 @@ public class TimerService extends Service {
             .setSmallIcon(R.drawable.ic_stat_logfit_timer)
             .setColor(0xFF1769E0)
             .setContentIntent(pendingIntent)
+            .addAction(0, "타이머 종료", stopPendingIntent)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
