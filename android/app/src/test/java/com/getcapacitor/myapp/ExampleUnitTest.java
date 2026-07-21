@@ -15,5 +15,8 @@ public class ExampleUnitTest {
     public void remainingSecondsRoundsUpAndNeverBecomesNegative() {
         assertEquals(3, TimerState.remainingSeconds(12_500L, 10_000L));
         assertEquals(0, TimerState.remainingSeconds(9_000L, 10_000L));
+        assertEquals(0, TimerState.remainingSeconds(10_000L, 10_000L));
+        assertEquals(1, TimerState.remainingSeconds(10_001L, 10_000L));
+        assertEquals(1, TimerState.remainingSeconds(10_999L, 10_000L));
     }
 }

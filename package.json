@@ -7,7 +7,9 @@
     "build": "rm -rf www && mkdir -p www && cp index.html logfit-core.js manifest.json sw.js chart.umd.min.js code_artifact.html icon.svg favicon.svg favicon-16.png favicon-32.png icon-192.png icon-512.png www/",
     "test": "node --test tests/*.test.js",
     "android:sync": "npm run build && cap sync android",
-    "android:test": "npm run android:sync && ./android/gradlew -p android testDebugUnitTest"
+    "android:test": "npm run android:sync && ./android/gradlew -p android testDebugUnitTest lintDebug",
+    "android:test:device": "npm run android:sync && ./android/gradlew -p android :app:connectedDebugAndroidTest",
+    "release:check": "npm test && npm audit --audit-level=moderate && npm run android:sync && ./android/gradlew -p android clean testDebugUnitTest lintDebug assembleDebug bundleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

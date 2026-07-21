@@ -3,6 +3,9 @@ package com.logfit.app;
 import static org.junit.Assert.*;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
@@ -22,5 +25,16 @@ public class ExampleInstrumentedTest {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         assertEquals("com.logfit.app", appContext.getPackageName());
+    }
+
+    @Test
+    public void packageTargetsAndroid16AndSupportsPictureInPicture() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        PackageManager packageManager = appContext.getPackageManager();
+        PackageInfo packageInfo = packageManager.getPackageInfo(appContext.getPackageName(), 0);
+
+        assertEquals(36, packageInfo.applicationInfo.targetSdkVersion);
+        assertTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE));
+        assertTrue(Build.VERSION.SDK_INT >= 24);
     }
 }

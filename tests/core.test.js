@@ -68,3 +68,27 @@ test("Android 16 Live Update 권한을 선언한다", () => {
   );
   assert.match(manifest, /android\.permission\.POST_PROMOTED_NOTIFICATIONS/);
 });
+
+test("Android 출시는 SDK 36을 대상으로 하고 로컬 데이터 백업과 평문 통신을 차단한다", () => {
+  const root = path.resolve(__dirname, "..");
+  const variables = fs.readFileSync(path.join(root, "android/variables.gradle"), "utf8");
+  const appGradle = fs.readFileSync(path.join(root, "android/app/build.gradle"), "utf8");
+  const manifest = fs.readFileSync(path.join(root, "android/app/src/main/AndroidManifest.xml"), "utf8");
+
+  assert.match(variables, /targetSdkVersion = 36/);
+  assert.match(appGradle, /release\(36\)/);
+  assert.match(appGradle, /minorApiLevel = 1/);
+  assert.match(manifest, /android:allowBackup="false"/);
+  assert.match(manifest, /android:usesCleartextTraffic="false"/);
+});
+
+test("Foreground 타이머 알림에서 사용자가 즉시 종료할 수 있다", () => {
+  const service = fs.readFileSync(
+    path.resolve(__dirname, "../android/app/src/main/java/com/logfit/app/TimerService.java"),
+    "utf8"
+  );
+
+  assert.match(service, /PendingIntent\.getService/);
+  assert.match(service, /\.addAction\(0, "타이머 종료", stopPendingIntent\)/);
+  assert.match(service, /Math\.max\(1, Math\.min\(intent\.getIntExtra\("seconds", 90\), 3600\)\)/);
+});
