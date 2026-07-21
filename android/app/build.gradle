@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
     compileSdk {
         version = release(36) {
@@ -20,10 +26,42 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            release {
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+}
+
+tasks.register('verifyReleaseSigningConfig') {
+    group = 'verification'
+    description = 'Play 업로드용 릴리스 서명 설정이 준비됐는지 확인합니다.'
+    doLast {
+        if (!keystorePropertiesFile.exists()) {
+            throw new GradleException('android/keystore.properties가 없습니다. keystore.properties.example을 참고해 생성하세요.')
+        }
+        ['storeFile', 'storePassword', 'keyAlias', 'keyPassword'].each { key ->
+            if (!keystoreProperties[key]) {
+                throw new GradleException("keystore.properties의 ${key} 값이 비어 있습니다.")
+            }
+        }
+        if (!rootProject.file(keystoreProperties['storeFile']).exists()) {
+            throw new GradleException("업로드 키 파일을 찾을 수 없습니다: ${keystoreProperties['storeFile']}")
         }
     }
 }

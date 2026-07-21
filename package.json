@@ -9,7 +9,8 @@
     "android:sync": "npm run build && cap sync android",
     "android:test": "npm run android:sync && ./android/gradlew -p android testDebugUnitTest lintDebug",
     "android:test:device": "npm run android:sync && ./android/gradlew -p android :app:connectedDebugAndroidTest",
-    "release:check": "npm test && npm audit --audit-level=moderate && npm run android:sync && ./android/gradlew -p android clean testDebugUnitTest lintDebug assembleDebug bundleRelease"
+    "release:check": "npm test && npm audit --audit-level=moderate && npm run android:sync && ./android/gradlew -p android clean testDebugUnitTest lintDebug assembleDebug bundleRelease",
+    "release:bundle:signed": "npm run android:sync && ./android/gradlew -p android verifyReleaseSigningConfig bundleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
