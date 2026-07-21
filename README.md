@@ -2,6 +2,8 @@
 
 LogFit은 N분할 순환 루틴을 기반으로 운동을 기록하는 초경량 PWA 및 Android 운동 일지입니다. 웹에서는 정적 앱으로, Android에서는 Capacitor WebView 앱으로 동작합니다. 모든 데이터는 `localStorage`에 저장되며 첫 로드 이후에는 오프라인에서도 사용할 수 있습니다.
 
+다른 PC에서 Android 출시 준비 작업을 이어갈 때는 [집 PC 작업 인수인계](docs/HANDOFF_HOME_PC_KO.md)를 먼저 확인하세요.
+
 ## 주요 기능
 
 - N분할 순환 루틴 생성 및 관리
