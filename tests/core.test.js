@@ -26,8 +26,8 @@ test("웹, 패키지, Android 버전과 서비스 워커 캐시가 일치한다"
   const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
   assert.match(html, new RegExp(`const appVersion = "${pkg.version.replaceAll(".", "\\.")}"`));
   assert.match(gradle, new RegExp(`versionName "${pkg.version.replaceAll(".", "\\.")}"`));
-  assert.match(html, /const cacheVersion = "v27"/);
-  assert.match(sw, /logfit-pwa-v27/);
+  assert.match(html, /const cacheVersion = "v28"/);
+  assert.match(sw, /logfit-pwa-v28/);
 });
 
 test("TimerPlugin은 Capacitor Bridge 생성 전에 등록된다", () => {

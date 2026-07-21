@@ -674,7 +674,7 @@
         </div>
       </section>
     </main>
-    <footer class="version-info" id="versionInfo"></footer>
+    <footer class="version-info"><span id="versionInfo"></span> · <a href="privacy.html">개인정보처리방침</a></footer>
   </div>
 
   <nav class="tabs" aria-label="하단 내비게이션">
@@ -747,7 +747,7 @@
     const { escapeHtml, normalizeTimerSnapshot } = window.LogFitCore;
     const selectorEscape = (value) => CSS.escape(String(value));
     const appVersion = "0.5.0";
-    const cacheVersion = "v27";
+    const cacheVersion = "v28";
     const schemaVersion = 4;
     const today = () => {
       const now = new Date();

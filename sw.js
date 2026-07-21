@@ -1,7 +1,8 @@
-const CACHE_NAME = "logfit-pwa-v27";
+const CACHE_NAME = "logfit-pwa-v28";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./privacy.html",
   "./logfit-core.js",
   "./code_artifact.html",
   "./chart.umd.min.js",
