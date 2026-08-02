@@ -525,29 +525,35 @@
     }
     body.pip-mode .timer > div {
       width: 100%;
-      display: grid;
-      place-items: center;
-      gap: 2px;
-      padding: 6px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      padding: 4px 10px;
     }
     body.pip-mode .timer-context {
       max-width: 100%;
       margin: 0;
       overflow: hidden;
       color: rgba(255,255,255,.9);
-      font-size: clamp(10px, 7vw, 18px);
-      line-height: 1.15;
+      font-size: clamp(10px, 5.5vw, 16px);
+      font-weight: 700;
+      line-height: 1.1;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     body.pip-mode .timer strong {
-      font-size: clamp(54px, 42vh, 132px);
-      line-height: .9;
+      font-size: clamp(38px, 46vh, 90px);
+      line-height: .95;
+      font-weight: 800;
+      letter-spacing: -1px;
     }
     body.pip-mode .timer p {
-      margin: 2px 0 0;
+      margin: 0;
       color: rgba(255,255,255,.78);
-      font-size: clamp(10px, 6vw, 17px);
+      font-size: clamp(9px, 4.5vw, 14px);
       line-height: 1.1;
     }
   </style>

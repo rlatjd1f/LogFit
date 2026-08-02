@@ -51,7 +51,7 @@ public class MainActivity extends BridgeActivity {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     try {
                         PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-                        builder.setAspectRatio(new Rational(1, 1));
+                        builder.setAspectRatio(new Rational(2, 1));
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             builder.setAutoEnterEnabled(enable);
                         }
@@ -75,7 +75,7 @@ public class MainActivity extends BridgeActivity {
         if (shouldEnterPip && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-                builder.setAspectRatio(new Rational(1, 1));
+                builder.setAspectRatio(new Rational(2, 1));
                 boolean success = enterPictureInPictureMode(builder.build());
                 Log.d("LogFitMainActivity", "onUserLeaveHint: enterPictureInPictureMode returned " + success);
             } catch (Exception e) {
