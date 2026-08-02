@@ -153,8 +153,8 @@
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
-      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      padding: 8px 10px calc(12px + max(0px, env(safe-area-inset-bottom)));
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
       border-top: 1px solid var(--line);
       backdrop-filter: blur(18px);
     }
@@ -680,11 +680,21 @@
   </div>
 
   <nav class="tabs" aria-label="하단 내비게이션">
-    <button class="tab active" data-go="dashboard"></button>
-    <button class="tab" data-go="workout"></button>
-    <button class="tab" data-go="manage"></button>
-    <button class="tab" data-go="analytics"></button>
-    <button class="tab" data-go="backup"></button>
+    <button class="tab active" data-go="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 10 9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg><span>홈</span>
+    </button>
+    <button class="tab" data-go="workout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6.5 6.5 11 11"/><path d="m21 21-1.5-1.5"/><path d="m3 3 1.5 1.5"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg><span>기록</span>
+    </button>
+    <button class="tab" data-go="manage">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg><span>관리</span>
+    </button>
+    <button class="tab" data-go="analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m7 16 4-5 3 3 5-8"/></svg><span>리포트</span>
+    </button>
+    <button class="tab" data-go="backup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span>백업</span>
+    </button>
   </nav>
 
   <div class="dialog" id="routineDialog" role="dialog" aria-modal="true">
@@ -1888,7 +1898,7 @@
       const isInPip = Boolean(event.isInPipMode ?? event.detail?.isInPipMode);
       document.body.classList.toggle("pip-mode", isInPip);
     });
-    if ("serviceWorker" in navigator) {
+    if (!window.Capacitor && "serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js");
     }
     let renderedDate = today();
