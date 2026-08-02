@@ -7,6 +7,7 @@
     "build": "node scripts/build.js",
     "test": "node --test tests/*.test.js",
     "android:sync": "npm run build && npx cap sync android",
+    "android:run": "npm run android:sync && node scripts/run.js",
     "android:test": "npm run android:sync && node scripts/gradlew.js -p android testDebugUnitTest lintDebug",
     "android:test:device": "npm run android:sync && node scripts/gradlew.js -p android :app:connectedDebugAndroidTest",
     "release:check": "npm test && npm audit --audit-level=moderate && npm run android:sync && node scripts/gradlew.js -p android clean testDebugUnitTest lintDebug assembleDebug bundleRelease",
