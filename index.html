@@ -590,6 +590,13 @@
             </div>
           </div>
           <div class="grid routine-list" id="routineCards"></div>
+          <div class="panel" style="border-color: color-mix(in srgb, var(--primary) 35%, var(--line)); background: color-mix(in srgb, var(--primary) 8%, var(--surface)); padding: 12px; gap: 8px; margin-top: 12px;">
+            <div>
+              <strong style="color: var(--primary); font-size: 13px; display: block;">💡 기존 웹 버전 데이터를 앱으로 가져오기</strong>
+              <p class="hint" style="margin-top: 2px; font-size: 12px;">웹 브라우저에서 내보낸 백업 JSON 파일(<code>logfit-backup-*.json</code>)을 선택하여 이 앱에 바로 적용할 수 있습니다.</p>
+            </div>
+            <button class="ghost" id="quickImportWebDataBtn" style="border-color: var(--primary); color: var(--primary); font-size: 13px;">웹 백업 파일 선택 및 가져오기</button>
+          </div>
           <div class="update-panel">
             <p class="hint">최신 버전 출시 여부를 확인하고 업데이트를 진행합니다.</p>
             <button class="ghost" id="checkApkUpdateBtn">앱 업데이트 확인</button>
@@ -662,15 +669,15 @@
               <input type="range" id="volumeSlider" min="0" max="100" value="100" style="margin-top: 5px; height: 38px; cursor: pointer; width: 100%;">
             </div>
           </div>
-          <h2>백업 및 복구</h2>
+          <h2>백업 및 복구 (웹 → 앱 데이터 이관)</h2>
           <div class="panel">
-            <p class="hint">로컬스토리지에 저장된 루틴, 기록, 설정을 JSON 파일로 옮길 수 있습니다.</p>
+            <p class="hint">웹 브라우저나 이전 디바이스에서 내보낸 <code>logfit-backup-*.json</code> 파일을 가져오거나 현 앱 데이터를 백업합니다.</p>
             <div class="grid two">
-              <button class="primary" id="exportBtn">내보내기</button>
-              <button id="importBtn">가져오기</button>
+              <button class="primary" id="exportBtn">데이터 내보내기</button>
+              <button id="importBtn">웹/이전 데이터 가져오기</button>
             </div>
             <input type="file" id="importFile" accept="application/json,.json" hidden>
-            <textarea id="backupText" placeholder="JSON 백업 내용을 붙여넣고 가져오기를 눌러도 됩니다."></textarea>
+            <textarea id="backupText" placeholder="JSON 백업 내용이나 웹 버전의 백업 텍스트를 붙여넣고 가져오기를 눌러도 됩니다."></textarea>
             <button class="danger" id="resetBtn">전체 초기화</button>
           </div>
         </div>
@@ -1710,6 +1717,7 @@
     });
     $("#themeBtn").addEventListener("click", () => setTheme(state.settings.theme === "dark" ? "light" : "dark"));
     $("#checkApkUpdateBtn")?.addEventListener("click", () => checkGitHubReleaseUpdate(true));
+    $("#quickImportWebDataBtn")?.addEventListener("click", () => $("#importFile").click());
     $("#quickStartBtn").addEventListener("click", () => {
       if (completedRoutineToday()) return;
       const routine = nextRoutine();
